@@ -1,43 +1,52 @@
-import { supabase } from '@/utils/supabase';
+import { CartItem } from "@/types/cart.types";
 
-
-export const getOrCreateCart = async (userId: string) => {
-
-  const { data: existingCart, error: fetchError } = await supabase
-    .from('carts')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
-
-
-  if (existingCart) {
-    return existingCart.id;
+export class CartService {
+  static async getCart(userId: string | undefined): Promise<CartItem[]> {
+    const url = userId ? `/api/cart/get?user_id=${userId}` : '/api/cart/get';
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Failed to fetch cart");
+    }
+    return response.json();
   }
 
-  const { data: newCart, error: createError } = await supabase
-    .from('carts')
-    .insert({ user_id: userId })
-    .select('id')
-    .single();
+  static async addItem(productId: number, variantId: number, userId: string): Promise<CartItem> {
+    const response = await fetch("/api/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ product_id: productId, variant_id: variantId, user_id: userId }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to add item to cart");
+    }
+    return response.json();
+  }
 
-  if (createError) throw new Error("Failed to initialize cart session");
+  static async updateItem(cartId: number, productVariantId: number, quantity: number, userId: string): Promise<void> {
+    const response = await fetch("/api/cart/update", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cart_id: cartId, product_variant_id: productVariantId, quantity: quantity, user_id: userId }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update item quantity");
+    }
+  }
 
-  return newCart.id;
-};
-
-
-export const addToCart = async (userId: string, productId: number, qty: number) => {
-  const cartId = await getOrCreateCart(userId);
-
-  const { data, error } = await supabase.from('cart_items')
-    .upsert({
-      cart_id: cartId,
-      product_id: productId,
-      quantity: qty,
-    }, { onConflict: 'cart_id, variant_id' })
-    .select(`*, product_variants(*)`)
-    .single();
-
-  if (error) throw error
-  return data
+  static async clearCart(userId: string): Promise<void> {
+    const response = await fetch("/api/cart/clear", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to clear cart");
+    }
+  }
 }

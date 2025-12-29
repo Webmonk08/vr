@@ -1,17 +1,10 @@
-import { create } from 'zustand'
-import { Database } from '@/types/database';
+import { create } from "zustand";
+import { CartItem } from "@/types/cart.types";
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-
-export type CartItemWithProduct = Tables<'cart_items'> & {
-  product: Tables<'products'> & {
-    variant: Tables<'product_variants'>;
-  };
-};
 export interface CartStore {
-  cart: CartItemWithProduct[];
+  cart: CartItem[];
   showCart: boolean;
-  addToCart: (item: CartItemWithProduct) => void;
+  addToCart: (item: CartItem) => void;
   removeFromCart: (itemId: number) => void;
   updateQuantity: (itemId: number, newQuantity: number) => void;
   clearCart: () => void;
@@ -26,23 +19,23 @@ export const useCartStore = create<CartStore>((set, get) => ({
   addToCart: (item) => {
     set((state) => {
       const existingItemIndex = state.cart.findIndex(
-        (i) => i.product_id === item.product_id
+        (i) => i.product.id === item.product.id && i.variant.id === item.variant.id
       );
       if (existingItemIndex > -1) {
         const newCart = [...state.cart];
         newCart[existingItemIndex].quantity += item.quantity;
         return { cart: newCart };
       }
-      return { cart: [...state.cart, item] };
+      return { cart: [...state.cart, { ...item, id: Date.now() }] };
     });
   },
   updateQuantity: (itemId, newQuantity) => {
     set((state) => ({
       cart: state.cart.map((item) =>
         item.id === itemId
-          ? { ...item, quantity: Math.max(1, newQuantity) }
+          ? { ...item, quantity: Math.max(0, newQuantity) }
           : item
-      ),
+      ).filter(item => item.quantity > 0),
     }));
   },
   removeFromCart: (itemId) => {
@@ -55,7 +48,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
   getTotalPrice: () => {
     const state = get();
     return state.cart.reduce((total, item) => {
-      return total + (item.product.variant.price * item.quantity);
+      return total + item.variant.price * item.quantity;
     }, 0);
   },
   getTotalItems: () => {
@@ -63,4 +56,3 @@ export const useCartStore = create<CartStore>((set, get) => ({
     return state.cart.reduce((total, item) => total + item.quantity, 0);
   },
 }));
-
