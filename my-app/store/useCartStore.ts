@@ -1,3 +1,5 @@
+
+
 import { create } from "zustand";
 import { CartItem } from "@/types/cart.types";
 
@@ -12,6 +14,8 @@ export interface CartStore {
   getTotalPrice: () => number;
   getTotalItems: () => number;
 }
+
+
 
 export const useCartStore = create<CartStore>((set, get) => ({
   cart: [],

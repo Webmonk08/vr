@@ -1,15 +1,15 @@
-import { Wheat, Link } from "lucide-react"
-
+import { Wheat } from "lucide-react"
+import Link from "next/link"
 const footer = () => {
   return (
 
-    < footer className="bg-green-900 py-12 text-green-200" >
+    < footer className="bg-green-900 mt-16 py-12 text-green-200" >
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="gap-8 grid grid-cols-1 md:grid-cols-4 mb-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Wheat />
-              <h3 className="font-bold text-white text-xl">RiceHaven</h3>
+              <h3 className="font-bold text-white text-xl">Veerapathra Traders</h3>
             </div>
             <p className="text-sm">Premium rice varieties delivered to your doorstep with care and quality.</p>
           </div>
@@ -27,8 +27,6 @@ const footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
-              <li><a href="#" className="hover:text-white transition">Shipping Info</a></li>
-              <li><a href="#" className="hover:text-white transition">Returns</a></li>
             </ul>
           </div>
           <div>

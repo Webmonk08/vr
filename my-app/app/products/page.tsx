@@ -48,7 +48,7 @@ const products = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="bg-gradient-to-b from-green-50 to-white py-12">
+      <div className="bg-linear-to-b from-green-50 to-white py-12">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="mb-8 text-center">
             <h2 className="mb-4 font-bold text-gray-900 text-4xl">Premium Rice Collection</h2>
@@ -77,7 +77,7 @@ const products = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-7xl">
         <div className="flex lg:flex-row flex-col gap-8">
           {/* Sidebar - Categories removed */}
-          <aside className="flex-shrink-0 lg:w-64">
+          <aside className="lg:w-64 shrink-0">
           </aside>
 
           {/* Products Grid */}
@@ -86,7 +86,7 @@ const products = () => {
               <p className="text-gray-600">
                 Showing <span className="font-semibold text-gray-900">{filteredProducts.length}</span> products
               </p>
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700">
+              <select title = {"sort"}className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700">
                 <option>Sort by: Featured</option>
                 <option>Price: Low to High</option>
                 <option>Price: High to Low</option>
@@ -106,7 +106,7 @@ const products = () => {
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-gray-900 text-lg">{product.name}</h3>
-                      <button className="text-gray-600 hover:text-green-700 transition">
+                      <button title='icon' className="text-gray-600 hover:text-green-700 transition">
                         <Heart className="w-5 h-5" />
                       </button>
                     </div>

@@ -1,15 +1,15 @@
-"use client";
-
+'use client'
+import withAuth from '@/component/withAuth';
 import { useMemo } from "react";
 import { useCartStore } from "@/store/useCartStore";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useUser } from "@/store/useUser";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CartService } from "@/services/cart.service";
 import { CartItem } from "@/types/cart.types";
 import { ShoppingCart } from "lucide-react";
 
 function Cart() {
-  const { user } = useAuthStore();
+  const { user } = useUser();
   const {
     cart: guestCart,
     removeFromCart: removeGuestItem,
@@ -115,14 +115,14 @@ function Cart() {
                               onClick={() =>
                                 user
                                   ? updateQuantity({
-                                      itemId: item.id,
-                                      productVariantId: item.variant.id,
-                                      quantity: item.quantity - 1,
-                                    })
+                                    itemId: item.id,
+                                    productVariantId: item.variant.id,
+                                    quantity: item.quantity - 1,
+                                  })
                                   : updateGuestQuantity(
-                                      item.id,
-                                      item.quantity - 1
-                                    )
+                                    item.id,
+                                    item.quantity - 1
+                                  )
                               }
                               className="bg-white hover:bg-gray-100 border border-gray-300 rounded-lg w-8 h-8 transition"
                             >
@@ -135,14 +135,14 @@ function Cart() {
                               onClick={() =>
                                 user
                                   ? updateQuantity({
-                                      itemId: item.id,
-                                      productVariantId: item.variant.id,
-                                      quantity: item.quantity + 1,
-                                    })
+                                    itemId: item.id,
+                                    productVariantId: item.variant.id,
+                                    quantity: item.quantity + 1,
+                                  })
                                   : updateGuestQuantity(
-                                      item.id,
-                                      item.quantity + 1
-                                    )
+                                    item.id,
+                                    item.quantity + 1
+                                  )
                               }
                               className="bg-white hover:bg-gray-100 border border-gray-300 rounded-lg w-8 h-8 transition"
                             >
@@ -164,7 +164,7 @@ function Cart() {
                     <button
                       onClick={() =>
                         user
-                          ? () => {}
+                          ? () => { }
                           : removeGuestItem(item.id)
                       }
                       className="mt-3 text-red-500 hover:text-red-700 text-sm transition"
@@ -221,4 +221,4 @@ function Cart() {
   );
 }
 
-export default Cart;
+export default withAuth(Cart, ['admin', 'customer']);
