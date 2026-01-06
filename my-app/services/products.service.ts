@@ -3,11 +3,11 @@ import { Product } from "@/types/product";
 const host = "http://localhost:8080"
 
 
-console.log("env" , host)
+console.log("env", host)
 export class ProductService {
 
   static async getAll(): Promise<Product[]> {
-    const response = await fetch(`${host}/api/products`);
+    const response = await fetch(`${host}/api/products/getAll`);
     if (!response.ok) {
       throw new Error("Failed to fetch products");
     }
@@ -34,7 +34,11 @@ export class ProductService {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(product),
+      body: JSON.stringify({
+        id: id,
+        data: product,
+      })
+      ,
     });
     if (!response.ok) {
       throw new Error('Failed to update product');

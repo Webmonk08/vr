@@ -2,14 +2,14 @@
 import withAuth from '@/component/withAuth';
 import { useMemo } from "react";
 import { useCartStore } from "@/store/useCartStore";
-import { useUser } from "@/store/useUser";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CartService } from "@/services/cart.service";
 import { CartItem } from "@/types/cart.types";
 import { ShoppingCart } from "lucide-react";
 
 function Cart() {
-  const { user } = useUser();
+  const { user } = useAuthStore();
   const {
     cart: guestCart,
     removeFromCart: removeGuestItem,

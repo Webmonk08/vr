@@ -9,7 +9,7 @@ const footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Wheat />
-              <h3 className="font-bold text-white text-xl">Veerapathra Traders</h3>
+              <h3 className="font-medium text-white font-georama text-xl">Veerapathra Traders</h3>
             </div>
             <p className="text-sm">Premium rice varieties delivered to your doorstep with care and quality.</p>
           </div>

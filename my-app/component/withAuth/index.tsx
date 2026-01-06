@@ -1,34 +1,43 @@
-
 'use client';
 
-import { useUser } from '@/store/useUser';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const withAuth = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
   roles: Array<'admin' | 'customer'>
 ) => {
   const WithAuth: React.FC<P> = (props) => {
-    const { user, role, loading, fetchUser } = useUser();
+    const { user } = useAuthStore();
     const router = useRouter();
+    const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
-      fetchUser();
-    }, []);
+      // 1. Wait until the store is actually initialized 
+      // (If you have a 'loading' flag in your store, use that instead of isChecking)
+      if (user == undefined) return;
 
-    useEffect(() => {
-      if (!loading && !user) {
+      const userRole = user?.user_metadata?.role;
+      console.log(user)
+      if (!user) {
         router.replace('/login');
-      } else if (!loading && user && !roles.includes(role as 'admin' | 'customer')) {
+      } else if (!roles.includes(userRole)) {
         router.replace('/');
+      } else {
+        setIsChecking(false);
       }
-    }, [user, loading, role, router, roles]);
+    }, [user, router]);
 
-    if (loading || !user || !roles.includes(role as 'admin' | 'customer')) {
-      return <div>Loading...</div>; // or a loading spinner
+    // Show loading while we determine auth status to prevent premature redirects
+    if (isChecking || !user || !roles.includes(user?.user_metadata?.role)) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <p>Loading Authentication...</p>
+        </div>
+      );
     }
-
+    console.log("gonna return")
     return <WrappedComponent {...props} />;
   };
 

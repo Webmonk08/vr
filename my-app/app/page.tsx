@@ -1,13 +1,14 @@
 'use client'
+import { useAuthStore } from '@/store/useAuthStore';
 import { Wheat, ShieldCheck, Truck, Clock, Award, Star, MapPin, Users, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 export default function App() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const { user } = useAuthStore()
 
-
-
+  console.log("Role", user?.user_metadata.role)
   // Home Page
   const features = [
     {
@@ -177,11 +178,6 @@ export default function App() {
         <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-gray-900 text-4xl">Our Rice Selection</h2>
-            <div className="flex justify-center gap-2">
-              <div className="bg-green-700 rounded-full w-2 h-2"></div>
-              <div className="bg-gray-300 rounded-full w-2 h-2"></div>
-              <div className="bg-gray-300 rounded-full w-2 h-2"></div>
-            </div>
           </div>
 
           <div className="gap-6 grid md:grid-cols-3">
