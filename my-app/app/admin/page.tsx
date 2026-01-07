@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react';
-import { Wheat, Package, Plus, Edit, ShoppingBag, User, AlertCircle } from 'lucide-react';
+import { Package, Plus, Edit } from 'lucide-react';
 import { ProductForm } from '@/component/ProductForm';
 import { ConfirmationModal } from '@/component/ConfirmationModal';
+import withAuth from '@/component/withAuth';
 
 interface Product {
   id: string;
@@ -28,7 +29,7 @@ interface AdminPageProps {
   onNavigate: (page: string) => void;
 }
 
-export default function AdminPage({ onNavigate }: AdminPageProps) {
+function AdminPage() {
   const [activeTab, setActiveTab] = useState<'add' | 'manage'>('add');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
@@ -178,3 +179,6 @@ export default function AdminPage({ onNavigate }: AdminPageProps) {
     </div>
   );
 }
+
+
+export default withAuth(AdminPage, ['admin']);

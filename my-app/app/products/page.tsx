@@ -8,6 +8,7 @@ import { ProductService } from '@/services/products.service';
 import { CartService } from '@/services/cart.service';
 import { Product, ProductVariant } from '@/types/product';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import LoadingPage from '@/component/loadingPage';
 
 const products = () => {
   const { user } = useAuthStore();
@@ -39,7 +40,7 @@ const products = () => {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingPage />;
   }
 
   if (isError) {

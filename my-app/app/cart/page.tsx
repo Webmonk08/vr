@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CartService } from "@/services/cart.service";
 import { CartItem } from "@/types/cart.types";
 import { ShoppingCart } from "lucide-react";
+import LoadingPage from '@/component/loadingPage';
 
 function Cart() {
   const { user } = useAuthStore();
@@ -59,7 +60,7 @@ function Cart() {
   }, [cart]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingPage />;
   }
 
   return (
