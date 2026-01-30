@@ -1,22 +1,6 @@
 
 import { X, CheckCircle, Package, Tag, Scale, DollarSign, Box } from 'lucide-react';
-
-interface Product {
-  id: string;
-  name: string;
-  variants: ProductVariant[];
-}
-
-interface ProductVariant {
-  weight: '5kg' | '10kg' | '25kg';
-  shortDescription: string;
-  longDescription: string;
-  image: string;
-  stock: number;
-  stockUnit: string;
-  price: number;
-}
-
+import { Product } from '@/types/product';
 interface ConfirmationModalProps {
   formData: Product;
   onConfirm: () => void;
@@ -116,7 +100,7 @@ export function ConfirmationModal({ formData, onConfirm, onCancel }: Confirmatio
                       <p className="text-sm text-gray-600 mb-1">Stock</p>
                       <p className="text-2xl text-gray-900 flex items-center gap-2">
                         <Box className="w-5 h-5 text-green-700" />
-                        {variant.stock} {variant.stockUnit}
+                        {variant.stock} {variant.sku}
                       </p>
                     </div>
 
@@ -132,7 +116,7 @@ export function ConfirmationModal({ formData, onConfirm, onCancel }: Confirmatio
                     <div className="md:col-span-2">
                       <p className="text-sm text-gray-600 mb-1">Long Description</p>
                       <p className="text-gray-900 bg-white rounded-xl p-3 leading-relaxed">
-                        {variant.longDescription}
+                        {variant.description}
                       </p>
                     </div>
                   </div>

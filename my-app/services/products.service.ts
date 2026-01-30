@@ -7,6 +7,7 @@ console.log("env", host)
 export class ProductService {
 
   static async getAll(): Promise<Product[]> {
+    console.log("Gonna Send Request for the Product Fetching")
     const response = await fetch(`${host}/api/products/getAll`);
     if (!response.ok) {
       throw new Error("Failed to fetch products");
@@ -15,7 +16,9 @@ export class ProductService {
   }
 
   static async create(product: Product): Promise<Product> {
-    const response = await fetch(`${host}/api/products`, {
+    console.log("request recieved for updation ")
+    console.log(product)
+    const response = await fetch(`${host}/api/products/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,8 +32,9 @@ export class ProductService {
   }
 
   static async update(id: number, product: Product): Promise<Product> {
-    const response = await fetch(`${host}/api/products/${id}`, {
-      method: 'PUT',
+    console.log("Updation", product)
+    const response = await fetch(`${host}/api/products/update/${id}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },

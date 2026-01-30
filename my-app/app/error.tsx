@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { ErrorPage } from "@/component/error-page";
 
 export default function Error({
   error,
@@ -14,9 +15,13 @@ export default function Error({
   }, [error]);
 
   return (
-    <div>
-      <h2>Something went wrong!</h2>
-      <button onClick={() => reset()}>Try again</button>
-    </div>
+    <ErrorPage 
+      errorType="general" 
+      message={error.message || "Something went wrong!"} 
+      onNavigate={(page) => {
+        if (page === 'home') window.location.href = '/';
+        else window.location.href = `/${page}`;
+      }}
+    />
   );
 }

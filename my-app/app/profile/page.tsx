@@ -1,22 +1,70 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Wheat, User, Mail, Phone, MapPin, Lock, Eye, EyeOff, LogOut, ShoppingBag, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUserProfile, updateUser, changePassword } from '@/services/user.service';
+import { ErrorPage } from '@/component/error-page';
 
 
 export default function ProfilePage() {
   // Mock user data - in a real app, this would come from auth state
-  const router = useRouter()
-  const [userData, setUserData] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Farm Road, Green Valley, CA 94043'
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { logout } = useAuthStore();
+  const { user, role } = useAuthStore()
+  const { data: userData, isLoading, isError } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: () => getUserProfile(user?.id || ''),
+  });
+  console.log(userData)
+  if (userData) {
+    userData.email = user?.email || ''
+  }
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+
+  const [editedData, setEditedData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
   });
 
-  const [isEditingDetails, setIsEditingDetails] = useState(false);
-  const [editedData, setEditedData] = useState({ ...userData });
+  useEffect(() => {
+    if (userData) {
+      setEditedData({
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        address: userData.address || ''
+      });
+    }
+  }, [userData]);
+
+  const updateMutation = useMutation({
+    mutationFn: updateUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      setIsEditingDetails(false);
+      alert('Details updated successfully!');
+    },
+    onError: (error) => {
+      alert('Failed to update details: ' + error.message);
+    }
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => {
+      alert('Password changed successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setIsChangingPassword(false);
+    },
+    onError: (error) => {
+      alert('Failed to change password: ' + error.message);
+    }
+  });
 
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -29,15 +77,24 @@ export default function ProfilePage() {
     new: false,
     confirm: false
   });
-  const { logout } = useAuthStore()
+
   const handleUpdateDetails = () => {
-    setUserData({ ...editedData });
-    setIsEditingDetails(false);
-    alert('Details updated successfully!');
+    updateMutation.mutate({
+      name: editedData.name,
+      phone: editedData.phone,
+      address: editedData.address
+    });
   };
 
   const handleCancelEdit = () => {
-    setEditedData({ ...userData });
+    if (userData) {
+      setEditedData({
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        address: userData.address || ''
+      });
+    }
     setIsEditingDetails(false);
   };
 
@@ -50,10 +107,7 @@ export default function ProfilePage() {
       alert('Password must be at least 8 characters long!');
       return;
     }
-    // In a real app, this would call an API
-    alert('Password changed successfully!');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setIsChangingPassword(false);
+    passwordMutation.mutate(passwordData.newPassword);
   };
 
   const handleLogout = () => {
@@ -63,6 +117,25 @@ export default function ProfilePage() {
       router.replace(' / ');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorPage errorType="general" message="Failed to load profile data. Please try again later." />
+    );
+  }
+
+  if (!userData && !isLoading) {
+    router.push('/login');
+    return null;
+  }
 
   const orderHistory = [
     {
@@ -98,8 +171,8 @@ export default function ProfilePage() {
               <User className="w-12 h-12 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl mb-2">{userData.name}</h1>
-              <p className="text-green-100">{userData.email}</p>
+              <h1 className="text-3xl mb-2">{userData?.name}</h1>
+              <p className="text-green-100">{userData?.email}</p>
             </div>
           </div>
         </div>
@@ -141,7 +214,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-center gap-3 text-gray-900 bg-gray-50 px-4 py-3 rounded-full">
                       <User className="w-4 h-4 text-gray-400" />
-                      <span>{userData.name}</span>
+                      <span>{userData?.name}</span>
                     </div>
                   )}
                 </div>
@@ -151,7 +224,7 @@ export default function ProfilePage() {
                   <label className="block text-sm text-gray-600 mb-2">Email Address</label>
                   <div className="flex items-center gap-3 text-gray-900 bg-gray-50 px-4 py-3 rounded-full">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    <span>{userData.email}</span>
+                    <span>{userData?.email}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 ml-4">Email cannot be changed</p>
                 </div>
@@ -172,7 +245,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-center gap-3 text-gray-900 bg-gray-50 px-4 py-3 rounded-full">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <span>{userData.phone}</span>
+                      <span>{userData?.phone}</span>
                     </div>
                   )}
                 </div>
@@ -193,7 +266,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-start gap-3 text-gray-900 bg-gray-50 px-4 py-3 rounded-2xl">
                       <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                      <span>{userData.address}</span>
+                      <span>{userData?.address}</span>
                     </div>
                   )}
                 </div>
@@ -365,6 +438,14 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h3 className="mb-4 text-gray-900">Quick Actions</h3>
               <div className="space-y-3">
+                {role === 'owner' && (
+                  <button
+                    onClick={() => router.push('/user-management')}
+                    className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition"
+                  >
+                    User Management
+                  </button>
+                )}
                 <button
                   onClick={() => router.push('/products')}
                   className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition"

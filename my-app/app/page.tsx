@@ -6,9 +6,9 @@ import { useState } from 'react';
 
 export default function App() {
   const [activeSlide, setActiveSlide] = useState(0);
-  const { user } = useAuthStore()
+  const { user, role } = useAuthStore()
 
-  console.log("Role", user?.user_metadata.role)
+  console.log("Role", role)
   // Home Page
   const features = [
     {
@@ -30,16 +30,6 @@ export default function App() {
       icon: <Clock className="w-12 h-12 text-green-700" />,
       title: "Always Fresh",
       description: "Fresh stocks delivered weekly, ensuring you always get the newest harvest available."
-    },
-    {
-      icon: <Award className="w-12 h-12 text-green-700" />,
-      title: "Award Winning",
-      description: "Winner of multiple culinary awards for exceptional quality and authentic taste."
-    },
-    {
-      icon: <Star className="w-12 h-12 text-green-700" />,
-      title: "Highly Rated",
-      description: "4.9-star rating from over 10,000 satisfied customers across the country."
     },
     {
       icon: <MapPin className="w-12 h-12 text-green-700" />,
@@ -156,7 +146,7 @@ export default function App() {
       {/* Features Section */}
       <section className="bg-white py-16">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
               <div
                 key={index}
@@ -234,9 +224,6 @@ export default function App() {
                 flavor, and aroma. From our fields to your table, we ensure the highest standards
                 at every step of the journey.
               </p>
-              <button className="bg-green-700 hover:bg-green-800 px-8 py-3 rounded-full text-white transition">
-                Learn More About Us
-              </button>
             </div>
 
             <div className="shadow-2xl rounded-3xl overflow-hidden">

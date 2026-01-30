@@ -2,12 +2,15 @@ import { CartItem } from "@/types/cart.types";
 
 export class CartService {
   static async getCart(userId: string | undefined): Promise<CartItem[]> {
-    const url = userId ? `/api/cart/get?user_id=${userId}` : '/api/cart/get';
+    const url = userId ? `/api/cart/get?user_id=${userId}` : "api/cart/get";
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error("Failed to fetch cart");
     }
-    return response.json();
+    const data = await response.json()
+    console.log("response", data)
+
+    return data;
   }
 
   static async addItem(productId: number, variantId: number, userId: string): Promise<CartItem> {
@@ -34,6 +37,19 @@ export class CartService {
     });
     if (!response.ok) {
       throw new Error("Failed to update item quantity");
+    }
+  }
+
+  static async removeItem(cartId: number, productId: number): Promise<void> {
+    const response = await fetch("/api/cart/remove", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cart_id: cartId, product_id: productId }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to remove item from cart");
     }
   }
 

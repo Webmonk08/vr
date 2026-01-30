@@ -7,9 +7,10 @@ import { useAuthStore } from '@/store/useAuthStore';
 const Header = () => {
   const { getTotalItems } = useCartStore();
   const totalItems = getTotalItems();
-  const { user, logout } = useAuthStore()
+  const { user, role } = useAuthStore()
+  console.log(role, 'header')
   const currPath = usePathname()
-  console.log(user?.user_metadata.name)
+  console.log("user", user)
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,7 +22,7 @@ const Header = () => {
 
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/" className="text-gray-700 hover:text-green-700 transition">Home</Link>
-            {user?.user_metadata.role === 'owner' ? <Link href="/" className="text-gray-700 hover:text-green-700 transition">Add Products</Link>
+            {role === 'owner' ? <Link href="/addproducts" className="text-gray-700 hover:text-green-700 transition">Add Products</Link>
               : <></>
             }
             <Link href="/products" className="text-gray-700 hover:text-green-700 transition">Products</Link>

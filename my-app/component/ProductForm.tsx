@@ -1,41 +1,27 @@
-
-import { useState, useEffect } from 'react';
-import { Package, Tag, FileText, Image as ImageIcon, Box, DollarSign, Hash, Scale } from 'lucide-react';
-
-interface Product {
-  id: string;
-  name: string;
-  variants: ProductVariant[];
-}
-
-interface ProductVariant {
-  weight: '5kg' | '10kg' | '25kg';
-  shortDescription: string;
-  longDescription: string;
-  image: string;
-  stock: number;
-  stockUnit: string;
-  price: number;
-}
+import { useState, useEffect } from 'react'
+import { Package, Tag, FileText, Image as ImageIcon, Box, DollarSign, Hash, Scale, Barcode } from 'lucide-react';
+import { Product, ProductVariant } from '@/types/product';
 
 interface ProductFormProps {
   product?: Product;
   onSubmit: (data: Product) => void;
 }
-
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
+  console.log("product", product)
   const [formData, setFormData] = useState<Product>({
-    id: product?.id || '',
+    id: product?.id || 0,
     name: product?.name || '',
     variants: product?.variants || [
       {
+        id: 0,
         weight: '5kg',
         shortDescription: '',
-        longDescription: '',
+        description: '',
         image: '',
+        sku: '',
         stock: 0,
-        stockUnit: 'bags',
-        price: 0
+        price: 0,
+        isdefault: false
       }
     ]
   });
@@ -47,7 +33,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   }, [product]);
 
   const handleProductChange = (field: keyof Product, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    if (field === 'id') {
+      setFormData({ ...formData, [field]: parseInt(value) || 0 });
+    } else {
+      setFormData({ ...formData, [field]: value });
+    }
   };
 
   const handleVariantChange = (index: number, field: keyof ProductVariant, value: any) => {
@@ -62,13 +52,15 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       variants: [
         ...formData.variants,
         {
+          id: 0,
           weight: '5kg',
           shortDescription: '',
-          longDescription: '',
+          description: '',
           image: '',
+          sku: '',
           stock: 0,
-          stockUnit: 'bags',
-          price: 0
+          price: 0,
+          isdefault: false
         }
       ]
     });
@@ -92,7 +84,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     for (let i = 0; i < formData.variants.length; i++) {
       const variant = formData.variants[i];
-      if (!variant.shortDescription || !variant.longDescription || !variant.image || variant.stock <= 0 || variant.price <= 0) {
+      if (!variant.shortDescription || !variant.description || !variant.image || !variant.sku || variant.stock <= 0 || variant.price <= 0) {
         alert(`Please complete all fields for variant ${i + 1}`);
         return;
       }
@@ -100,6 +92,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     onSubmit(formData);
   };
+  console.log("FormData", formData)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -253,8 +246,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   <div className="relative">
                     <FileText className="w-4 h-4 text-gray-400 absolute left-4 top-4" />
                     <textarea
-                      value={variant.longDescription}
-                      onChange={(e) => handleVariantChange(index, 'longDescription', e.target.value)}
+                      value={variant.description}
+                      onChange={(e) => handleVariantChange(index, 'description', e.target.value)}
                       placeholder="Detailed description of the product..."
                       rows={4}
                       className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-green-700 focus:outline-none resize-none"
@@ -262,7 +255,22 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1 ml-4">
-                    {variant.longDescription.length} characters
+                    {variant.description.length} characters
+                  </p>
+                </div>
+                {/* Is Default */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={variant.isdefault}
+                      onChange={(e) => handleVariantChange(index, 'isdefault', e.target.checked)}
+                      className="w-5 h-5 rounded-sm border-gray-300 text-green-700 focus:ring-green-700"
+                    />
+                    Set as Default
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1 ml-4">
+                    If this product is given default then it will appear in the home page
                   </p>
                 </div>
 
@@ -296,43 +304,52 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   )}
                 </div>
 
-                {/* Stock */}
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">
-                    Stock Quantity <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Box className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="number"
-                      min="0"
-                      value={variant.stock}
-                      onChange={(e) => handleVariantChange(index, 'stock', parseInt(e.target.value))}
-                      placeholder="0"
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
-                      required
-                    />
-                  </div>
-                </div>
+                {/* Stock Information Container */}
+                <div className="md:col-span-2">
+                  <div className="bg-white rounded-2xl p-4 border-2 border-green-100">
+                    <label className="block text-sm text-gray-700 mb-3">
+                      <Box className="w-4 h-4 inline mr-2 text-green-700" />
+                      Stock Information <span className="text-red-500">*</span>
+                    </label>
 
-                {/* Stock Unit */}
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">
-                    Stock Unit <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Tag className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <select
-                      value={variant.stockUnit}
-                      onChange={(e) => handleVariantChange(index, 'stockUnit', e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none appearance-none bg-white"
-                      required
-                    >
-                      <option value="bags">Bags</option>
-                      <option value="boxes">Boxes</option>
-                      <option value="units">Units</option>
-                      <option value="pallets">Pallets</option>
-                    </select>
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* SKU */}
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-2">
+                          SKU Code
+                        </label>
+                        <div className="relative">
+                          <Barcode className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={variant.sku}
+                            onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
+                            placeholder="SKU-001"
+                            className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none text-sm"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Stock Quantity */}
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-2">
+                          Quantity
+                        </label>
+                        <div className="relative">
+                          <Hash className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="number"
+                            min="0"
+                            value={variant.stock}
+                            onChange={(e) => handleVariantChange(index, 'stock', parseInt(e.target.value))}
+                            placeholder="0"
+                            className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none text-sm"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -355,17 +372,19 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             type="button"
             onClick={() => {
               setFormData({
-                id: '',
+                id: 0,
                 name: '',
                 variants: [
                   {
+                    id: 0,
                     weight: '5kg',
                     shortDescription: '',
-                    longDescription: '',
+                    description: '',
                     image: '',
+                    sku: '',
                     stock: 0,
-                    stockUnit: 'bags',
-                    price: 0
+                    price: 0,
+                    isdefault: false
                   }
                 ]
               });
