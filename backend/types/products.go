@@ -19,7 +19,7 @@ type DBProductVariant struct {
 	SKU             string  `json:"sku"`
 	Description     string  `json:"description"`
 	LongDescription string  `json:"long_description"`
-	Image           string  `json:"image"`
+	Image           []string  `json:"image"`
 	Isdefault       bool    `json:"isdefault"`
 }
 
@@ -46,7 +46,7 @@ type ProductVariant struct {
 	ShortDescription string  `json:"shortDescription"`
 	Description      string  `json:"description"`
 	SKU              string  `json:"sku"`
-	Image            string  `json:"image"`
+	Image            []string  `json:"image"`
 	Isdefault        bool    `json:"isdefault"`
 }
 type CartProduct struct {
