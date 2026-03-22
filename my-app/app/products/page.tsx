@@ -43,6 +43,10 @@ const products = () => {
       product.variants.length > 0
   );
 
+  const displayItems = filteredProducts.flatMap(product => 
+    product.variants.map(variant => ({ product, variant }))
+  );
+
   if (isLoading) return <LoadingPage />;
   if (isError) return <ErrorPage errorType="general" message={error?.message} />;
 
@@ -96,8 +100,8 @@ const products = () => {
         {/* Toolbar row */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
           <p className="text-gray-600 text-sm sm:text-base">
-            Showing <span className="font-semibold text-gray-900">{filteredProducts.length}</span>{' '}
-            {filteredProducts.length === 1 ? 'product' : 'products'}
+            Showing <span className="font-semibold text-gray-900">{displayItems.length}</span>{' '}
+            {displayItems.length === 1 ? 'product' : 'products'}
           </p>
           <select
             title="sort"
@@ -111,41 +115,40 @@ const products = () => {
         </div>
 
         {/* Product Grid */}
-        {filteredProducts.length > 0 ? (
+        {displayItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+            {displayItems.map(({ product, variant }) => (
               <div
-                key={product.id}
+                key={`${product.id}-${variant.id}`}
                 className="group flex flex-col bg-white shadow-sm hover:shadow-md rounded-xl transition overflow-hidden"
               >
                 {/* Image area */}
                 <div className="flex justify-center items-center bg-green-50 group-hover:bg-green-100 p-8 transition">
                   <img
-                    src={product.variants[0].image}
-                    alt={product.name}
+                    src={variant.image}
+                    alt={`${product.name} ${variant.weight}`}
                     className="h-36 w-auto object-contain"
                   />
                 </div>
 
                 {/* Card body */}
                 <div className="flex flex-col flex-1 p-5 gap-2">
-                  <h3 className="font-bold text-gray-900 text-base leading-snug">{product.name}</h3>
+                  <h3 className="font-bold text-gray-900 text-base leading-snug">{product.name} - {variant.weight}</h3>
                   <p className="text-gray-500 text-sm flex-1 line-clamp-2">
-                    {product.variants[0]?.description}
+                    {variant.description}
                   </p>
 
                   {/* Price + CTA */}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                     <div>
                       <span className="font-bold text-gray-900 text-xl">
-                        ${product.variants[0]?.price}
+                        ${variant.price}
                       </span>
-                      <span className="ml-1 text-gray-500 text-xs">/{product.name}</span>
                     </div>
                     <button
                       onClick={() => {
                         const userId = user ? user.id : 'guest';
-                        addToCart({ productId: product.id, variantId: product.variants[0]?.id, userId });
+                        addToCart({ productId: product.id, variantId: variant.id, userId });
                       }}
                       className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 active:scale-95 px-3 py-2 rounded-lg text-white text-sm font-medium transition"
                     >

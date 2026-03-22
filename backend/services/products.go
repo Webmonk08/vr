@@ -125,6 +125,25 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 		return nil, types.InternalServerError("Failed to update product name")
 	}
 
+	// Track incoming variant IDs to delete removed ones
+	incomingIDs := make(map[int]bool)
+	for _, v := range data.Variants {
+		if v.ID != 0 {
+			incomingIDs[v.ID] = true
+		}
+	}
+
+	var existingVariants []struct {
+		ID int `json:"id"`
+	}
+	s.client.From("product_variants").Select("id", "", false).Eq("product_id", fmt.Sprintf("%d", id)).ExecuteTo(&existingVariants)
+
+	for _, ev := range existingVariants {
+		if !incomingIDs[ev.ID] {
+			s.client.From("product_variants").Delete("", "").Eq("id", fmt.Sprintf("%d", ev.ID)).Execute()
+		}
+	}
+
 	for _, v := range data.Variants {
 		var val float64
 		var unit string

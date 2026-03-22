@@ -8,11 +8,9 @@ interface ProductFormProps {
 }
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
   console.log("product", product)
-  const [formData, setFormData] = useState<Product>({
-    id: product?.id || 0,
-    name: product?.name || '',
-    variants: (product?.variants && product.variants.length > 0) ? product.variants : [
-      {
+  const formatVariants = (variants?: ProductVariant[] | any[]) => {
+    if (!variants || variants.length === 0) {
+      return [{
         id: 0,
         weight: '5kg',
         shortDescription: '',
@@ -22,27 +20,26 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         stock: 0,
         price: 0,
         isdefault: false
-      }
-    ]
+      }];
+    }
+    return variants.map(v => ({
+      ...v,
+      weight: typeof v.weight === 'string' ? v.weight.replace(/\s+/g, '') : v.weight,
+      image: Array.isArray(v.image) ? v.image[0] || '' : v.image
+    }));
+  };
+
+  const [formData, setFormData] = useState<Product>({
+    id: product?.id || 0,
+    name: product?.name || '',
+    variants: formatVariants(product?.variants)
   });
 
   useEffect(() => {
     if (product) {
       setFormData({
         ...product,
-        variants: (product.variants && product.variants.length > 0) ? product.variants : [
-          {
-            id: 0,
-            weight: '5kg',
-            shortDescription: '',
-            description: '',
-            image: '',
-            sku: '',
-            stock: 0,
-            price: 0,
-            isdefault: false
-          }
-        ]
+        variants: formatVariants(product.variants)
       });
     }
   }, [product]);

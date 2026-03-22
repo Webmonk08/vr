@@ -35,6 +35,7 @@ function ADMINPage() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowConfirmModal(false);
       setPendingFormData(null);
+      setSelectedProduct(null);
       alert('Product saved successfully!');
     },
     onError: (error) => {
@@ -49,6 +50,7 @@ function ADMINPage() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowConfirmModal(false);
       setPendingFormData(null);
+      setSelectedProduct(null);
       alert('Product updated successfully!');
     },
     onError: (error) => {
