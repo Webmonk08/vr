@@ -65,6 +65,16 @@ export class ProductService {
     }
     return data;
   }
+
+  static async deleteProduct(id: number): Promise<void> {
+    const response = await fetch(`${host}/api/products/delete/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || data.error || 'Failed to delete product');
+    }
+  }
 }
 
 

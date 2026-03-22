@@ -107,6 +107,21 @@ func main() {
 		c.JSON(http.StatusOK, updated)
 	})
 
+	r.DELETE("/api/products/delete/:id", func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			handleError(c, types.BadRequest("Invalid ID"))
+			return
+		}
+		err = service.DeleteProduct(id)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.Status(http.StatusOK)
+	})
+
 	// --- Cart Endpoints ---
 
 	r.GET("/api/cart/get", func(c *gin.Context) {

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react';
-import { Package, Plus, Edit, ArrowLeft, Box } from 'lucide-react';
+import { Package, Plus, Edit, ArrowLeft, Box, Trash2 } from 'lucide-react';
 import { ProductForm } from '@/component/ProductForm';
 import { ConfirmationModal } from '@/component/ConfirmationModal';
 import withAuth from '@/component/withAuth';
@@ -56,6 +56,25 @@ function ADMINPage() {
       alert('Failed to update product');
     }
   });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: ProductService.deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      alert('Product deleted successfully!');
+    },
+    onError: (error) => {
+      console.error(error);
+      alert('Failed to delete product');
+    }
+  });
+
+  const handleDeleteProduct = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this product?')) {
+      deleteProductMutation.mutate(id);
+    }
+  };
 
   const handleFormSubmit = (formData: Product) => {
     setPendingFormData(formData);
@@ -212,17 +231,26 @@ function ADMINPage() {
                             </div>
                           )}
 
-                          {/* Edit Button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProduct(product);
-                            }}
-                            className="w-full mt-4 bg-green-50 hover:bg-green-100 text-green-700 py-2.5 rounded-full transition flex items-center justify-center gap-2 text-sm"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Edit Product
-                          </button>
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 mt-4">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedProduct(product);
+                              }}
+                              className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 py-2.5 rounded-full transition flex items-center justify-center gap-2 text-sm"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Edit Product
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteProduct(e, product.id)}
+                              className="flex-shrink-0 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-full transition flex items-center justify-center gap-2 text-sm"
+                              title="Delete Product"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

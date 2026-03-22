@@ -170,3 +170,18 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 
 	return &data, nil
 }
+
+func (s *Service) DeleteProduct(id int) error {
+	_, _, err := s.client.From("product_variants").Delete("", "").Eq("product_id", fmt.Sprintf("%d", id)).Execute()
+	if err != nil {
+		return types.InternalServerError("Failed to delete product variants")
+	}
+
+	_, _, err = s.client.From("products").Delete("", "").Eq("id", fmt.Sprintf("%d", id)).Execute()
+	if err != nil {
+		return types.InternalServerError("Failed to delete product")
+	}
+
+	return nil
+}
+
