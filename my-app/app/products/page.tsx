@@ -16,10 +16,11 @@ const products = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading, isError, error } = useQuery<Product[], Error>({
+  const { data, isLoading, isError, error } = useQuery<Product[], Error>({
     queryKey: ['products'],
     queryFn: ProductService.getAll,
   });
+  const products = data || [];
 
   const { mutate: addToCart } = useMutation({
     mutationFn: ({ productId, variantId, userId }: { productId: number; variantId: number; userId: string }) =>
@@ -62,7 +63,7 @@ const products = () => {
             </p>
           </div>
 
-          {/* Search Bar + Admin Button */}
+          {/* Search Bar + ADMIN Button */}
           <div className="flex flex-col sm:flex-row items-center gap-3 max-w-3xl mx-auto">
             {/* Search */}
             <div className="relative w-full">
@@ -76,8 +77,8 @@ const products = () => {
               />
             </div>
 
-            {/* Add Product — only for admin/owner */}
-            {(role === 'admin' || role === 'owner') && (
+            {/* Add Product — only for ADMIN/OWNER */}
+            {(role === 'ADMIN' || role === 'OWNER') && (
               <Link
                 href="/addproducts"
                 className="flex-shrink-0 inline-flex items-center px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-md whitespace-nowrap w-full sm:w-auto justify-center"

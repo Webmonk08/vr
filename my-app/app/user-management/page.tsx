@@ -13,7 +13,7 @@ interface UserData {
   name: string;
   email: string;
   phone: string;
-  role: 'Owner' | 'Admin' | 'Manager' | 'Staff' | 'Customer';
+  role: 'OWNER' | 'ADMIN' | 'Manager' | 'Staff' | 'Customer';
   status: 'Active' | 'Inactive';
   joinDate: string;
   avatar?: string;
@@ -26,7 +26,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
       name: 'John Smith',
       email: 'john.smith@riceharvest.com',
       phone: '+1 (555) 123-4567',
-      role: 'Owner',
+      role: 'OWNER',
       status: 'Active',
       joinDate: '2023-01-15'
     },
@@ -35,7 +35,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
       name: 'Sarah Johnson',
       email: 'sarah.j@riceharvest.com',
       phone: '+1 (555) 234-5678',
-      role: 'Admin',
+      role: 'ADMIN',
       status: 'Active',
       joinDate: '2023-03-20'
     },
@@ -75,13 +75,13 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
     status: 'Active' as UserData['status']
   });
 
-  const roles: UserData['role'][] = ['Owner', 'Admin', 'Manager', 'Staff', 'Customer'];
+  const roles: UserData['role'][] = ['OWNER', 'ADMIN', 'Manager', 'Staff', 'Customer'];
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Owner':
+      case 'OWNER':
         return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Admin':
+      case 'ADMIN':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'Manager':
         return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -96,8 +96,8 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'Owner':
-      case 'Admin':
+      case 'OWNER':
+      case 'ADMIN':
         return <Shield className="w-4 h-4" />;
       case 'Manager':
       case 'Staff':
@@ -194,8 +194,8 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Admins</p>
-                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'Admin' || u.role === 'Owner').length}</h3>
+                <p className="text-sm text-gray-600 mb-1">ADMINs</p>
+                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'ADMIN' || u.role === 'OWNER').length}</h3>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                 <Shield className="w-6 h-6 text-purple-700" />
@@ -319,9 +319,9 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                             setDeletingUserId(user.id);
                             setShowDeleteConfirm(true);
                           }}
-                          disabled={user.role === 'Owner'}
+                          disabled={user.role === 'OWNER'}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={user.role === 'Owner' ? 'Cannot delete owner' : 'Delete User'}
+                          title={user.role === 'OWNER' ? 'Cannot delete OWNER' : 'Delete User'}
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -500,15 +500,15 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                     value={editingUser.role}
                     onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as UserData['role'] })}
                     required
-                    disabled={editingUser.role === 'Owner'}
+                    disabled={editingUser.role === 'OWNER'}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {roles.map(role => (
                       <option key={role} value={role}>{role}</option>
                     ))}
                   </select>
-                  {editingUser.role === 'Owner' && (
-                    <p className="text-xs text-gray-500 mt-1">Owner role cannot be changed</p>
+                  {editingUser.role === 'OWNER' && (
+                    <p className="text-xs text-gray-500 mt-1">OWNER role cannot be changed</p>
                   )}
                 </div>
 
@@ -587,4 +587,4 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
     </div>
   );
 }
-export default withAuth(UserManagementPage, ['owner'])
+export default withAuth(UserManagementPage, ['OWNER'])

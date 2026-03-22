@@ -1,19 +1,17 @@
 package services
 
 import (
-	"fmt"
 	"vr/types"
 )
 
 func (s *Service) GetProfile(userID string) (*types.User, error) {
 	var users []types.User
 	_, err := s.client.From("users").Select("*", "exact", false).Eq("id", userID).ExecuteTo(&users)
-	fmt.Println("users ", users)
 	if err != nil {
-		return nil, err
+		return nil, types.InternalServerError("Failed to fetch user profile")
 	}
 	if len(users) == 0 {
-		return nil, fmt.Errorf("user not found")
+		return nil, types.NotFound("User profile not found")
 	}
 	return &users[0], nil
 }
@@ -35,14 +33,12 @@ func (s *Service) UpdateProfile(req types.UpdateProfileRequest) (*types.User, er
 	}
 
 	var users []types.User
-	// Update returns *UpdateBuilder, ExecuteTo returns (int64, error)
 	_, err := s.client.From("users").Update(updates, "", "").Eq("id", req.UserID).ExecuteTo(&users)
 	if err != nil {
-		return nil, err
+		return nil, types.InternalServerError("Failed to update user profile")
 	}
 	if len(users) == 0 {
-		return s.GetProfile(req.UserID)
+		return nil, types.NotFound("User profile not found for update")
 	}
 	return &users[0], nil
 }
-

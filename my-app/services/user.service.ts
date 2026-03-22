@@ -1,5 +1,4 @@
 import { useAuthStore } from '@/store/useAuthStore';
-import { supabase } from '@/utils/supabase';
 import Error from 'next/error';
 
 export interface dataProfile {
@@ -49,20 +48,28 @@ export const updateUser = async (
     });
     const result = await res.json();
 
-    if (!res.ok) return new Error(result.message);
+    if (!res.ok) throw new Error(result.message || result.error || "Update failed");
 
     return result;
-  } catch (e) {
-    return e;
+  } catch (e: any) {
+    throw e;
   }
 };
 export const changePassword = async (password: string) => {
-
-  const { data, error } = await supabase.auth.updateUser({
-    password: password
+  const session = useAuthStore.getState().session;
+  const res = await fetch(`http://localhost:8080/api/auth/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json',
+      'Authorization': session ? session.access_token : ''
+    },
+    body: JSON.stringify({ password })
   });
 
-  if (error) throw error;
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || data.error || "Password change failed");
+  }
 
   return data;
 }

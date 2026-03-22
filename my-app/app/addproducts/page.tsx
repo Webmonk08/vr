@@ -15,17 +15,18 @@ interface FormData extends Product {
 }
 
 
-function AdminPage() {
+function ADMINPage() {
   const [activeTab, setActiveTab] = useState<'add' | 'manage'>('add');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: ProductService.getAll,
   });
+  const products = data || [];
 
 
   const createProductMutation = useMutation({
@@ -84,7 +85,7 @@ function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Admin Header */}
+        {/* ADMIN Header */}
         <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-3xl p-8 mb-8 text-white">
           <div className="flex items-center gap-4 mb-2">
             <Package className="w-10 h-10" />
@@ -154,7 +155,9 @@ function AdminPage() {
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map((product) => (
+                    {products.map((product) => {
+                      const variants = product.variants || [];
+                      return (
                       <div
                         key={product.id}
                         onClick={() => setSelectedProduct(product)}
@@ -163,7 +166,7 @@ function AdminPage() {
                         {/* Product Image */}
                         <div className="h-48 overflow-hidden bg-gray-100">
                           <img
-                            src={product.variants[0]?.image}
+                            src={variants[0]?.image}
                             alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                           />
@@ -183,28 +186,28 @@ function AdminPage() {
                           <div className="flex items-center gap-2 mb-4">
                             <Box className="w-4 h-4 text-gray-400" />
                             <span className="text-sm text-gray-600">
-                              {product.variants.length} Variant{product.variants.length !== 1 ? 's' : ''}
+                              {variants.length} Variant{variants.length !== 1 ? 's' : ''}
                             </span>
                           </div>
 
                           {/* First Variant Details */}
-                          {product.variants[0] && (
+                          {variants[0] && (
                             <div className="space-y-2 pt-4 border-t border-gray-100">
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Weight:</span>
-                                <span className="text-gray-900">{product.variants[0].weight}</span>
+                                <span className="text-gray-900">{variants[0].weight}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Price:</span>
-                                <span className="text-green-700 font-medium">${product.variants[0].price.toFixed(2)}</span>
+                                <span className="text-green-700 font-medium">${variants[0].price.toFixed(2)}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Stock:</span>
-                                <span className="text-gray-900">{product.variants[0].stock} {product.variants[0].sku}</span>
+                                <span className="text-gray-900">{variants[0].stock} {variants[0].sku}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">SKU:</span>
-                                <span className="text-gray-900 font-mono text-xs">{product.variants[0].sku}</span>
+                                <span className="text-gray-900 font-mono text-xs">{variants[0].sku}</span>
                               </div>
                             </div>
                           )}
@@ -222,7 +225,8 @@ function AdminPage() {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
               </div>
@@ -246,4 +250,4 @@ function AdminPage() {
 }
 
 
-export default withAuth(AdminPage, ['admin', 'owner']);
+export default withAuth(ADMINPage, ['ADMIN', 'OWNER']);

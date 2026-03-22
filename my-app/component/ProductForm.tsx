@@ -11,7 +11,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [formData, setFormData] = useState<Product>({
     id: product?.id || 0,
     name: product?.name || '',
-    variants: product?.variants || [
+    variants: (product?.variants && product.variants.length > 0) ? product.variants : [
       {
         id: 0,
         weight: '5kg',
@@ -28,7 +28,22 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
   useEffect(() => {
     if (product) {
-      setFormData(product);
+      setFormData({
+        ...product,
+        variants: (product.variants && product.variants.length > 0) ? product.variants : [
+          {
+            id: 0,
+            weight: '5kg',
+            shortDescription: '',
+            description: '',
+            image: '',
+            sku: '',
+            stock: 0,
+            price: 0,
+            isdefault: false
+          }
+        ]
+      });
     }
   }, [product]);
 

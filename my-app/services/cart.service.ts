@@ -4,10 +4,10 @@ export class CartService {
   static async getCart(userId: string | undefined): Promise<CartItem[]> {
     const url = userId ? `/api/cart/get?user_id=${userId}` : "api/cart/get";
     const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error("Failed to fetch cart");
-    }
     const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.message || data.error || "Failed to fetch cart");
+    }
     console.log("response", data)
 
     return data;
@@ -21,10 +21,11 @@ export class CartService {
       },
       body: JSON.stringify({ product_id: productId, variant_id: variantId, user_id: userId }),
     });
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error("Failed to add item to cart");
+      throw new Error(data.message || data.error || "Failed to add item to cart");
     }
-    return response.json();
+    return data;
   }
 
   static async updateItem(cartId: number, productVariantId: number, quantity: number, userId: string): Promise<void> {
@@ -36,7 +37,8 @@ export class CartService {
       body: JSON.stringify({ cart_id: cartId, product_variant_id: productVariantId, quantity: quantity, user_id: userId }),
     });
     if (!response.ok) {
-      throw new Error("Failed to update item quantity");
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || data.error || "Failed to update item quantity");
     }
   }
 
@@ -49,7 +51,8 @@ export class CartService {
       body: JSON.stringify({ cart_id: cartId, product_id: productId }),
     });
     if (!response.ok) {
-      throw new Error("Failed to remove item from cart");
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || data.error || "Failed to remove item from cart");
     }
   }
 
@@ -62,7 +65,8 @@ export class CartService {
       body: JSON.stringify({ user_id: userId }),
     });
     if (!response.ok) {
-      throw new Error("Failed to clear cart");
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || data.error || "Failed to clear cart");
     }
   }
 }

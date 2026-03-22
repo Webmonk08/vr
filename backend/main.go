@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +14,18 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/supabase-community/supabase-go"
 )
+
+func handleError(c *gin.Context, err error) {
+	if apiErr, ok := err.(*types.APIError); ok {
+		c.JSON(apiErr.StatusCode, apiErr)
+		return
+	}
+	c.JSON(http.StatusInternalServerError, types.APIError{
+		StatusCode: http.StatusInternalServerError,
+		Message:    "An unexpected error occurred",
+		Details:    err.Error(),
+	})
+}
 
 func main() {
 	err := godotenv.Load()
@@ -39,7 +50,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{"http://localhost:3000" , "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
@@ -48,10 +59,9 @@ func main() {
 	// --- Products Endpoints ---
 
 	r.GET("/api/products/getAll", func(c *gin.Context) {
-		fmt.Println("Gonna fetch")
 		products, err := service.GetProducts()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, products)
@@ -59,15 +69,13 @@ func main() {
 
 	r.POST("/api/products/create", func(c *gin.Context) {
 		var product types.Product
-		fmt.Println("bind")
 		if err := c.ShouldBindJSON(&product); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
-		fmt.Println("gonna create the profucts")
 		created, err := service.CreateProduct(product)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, created)
@@ -77,26 +85,23 @@ func main() {
 		idStr := c.Param("id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			handleError(c, types.BadRequest("Invalid ID"))
 			return
 		}
 
-		// The prompt specified request body: { id: number, data: Product }
-		// But usually PUT /:id uses the ID from URL or Body.
-		// We'll bind the body to check for 'data'.
 		type UpdateReq struct {
 			ID   int           `json:"id"`
 			Data types.Product `json:"data"`
 		}
 		var req UpdateReq
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
 
 		updated, err := service.UpdateProduct(id, req.Data)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, updated)
@@ -107,29 +112,26 @@ func main() {
 	r.GET("/api/cart/get", func(c *gin.Context) {
 		userID := c.Query("user_id")
 		if userID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+			handleError(c, types.BadRequest("user_id is required"))
 			return
 		}
-		fmt.Println("Cart request")
 		cart, err := service.GetCart(userID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
-		data, _ := json.MarshalIndent(cart, "", "  ")
-		fmt.Println(string(data))
 		c.JSON(http.StatusOK, cart)
 	})
 
 	r.POST("/api/cart/add", func(c *gin.Context) {
 		var req types.AddToCartRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
 		item, err := service.AddToCart(req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, item)
@@ -138,12 +140,12 @@ func main() {
 	r.POST("/api/cart/update", func(c *gin.Context) {
 		var req types.UpdateCartRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
 		err := service.UpdateCartItem(req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.Status(http.StatusOK)
@@ -152,12 +154,12 @@ func main() {
 	r.POST("/api/cart/clear", func(c *gin.Context) {
 		var req types.ClearCartRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
 		err := service.ClearCart(req.UserID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.Status(http.StatusOK)
@@ -166,16 +168,14 @@ func main() {
 	// --- User & Profile Endpoints ---
 
 	r.POST("/api/data/getdataProfile", func(c *gin.Context) {
-		log.Println("req recievef")
 		var req types.ProfileRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
 		profile, err := service.GetProfile(req.UserID)
-		fmt.Println(profile)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, profile)
@@ -184,15 +184,83 @@ func main() {
 	r.POST("/api/data/update", func(c *gin.Context) {
 		var req types.UpdateProfileRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
 		updated, err := service.UpdateProfile(req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, updated)
+	})
+
+	// --- Auth Endpoints ---
+
+	r.POST("/api/auth/signup", func(c *gin.Context) {
+		var req types.AuthRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		res, err := service.SignUp(req)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, res)
+	})
+
+	r.POST("/api/auth/login", func(c *gin.Context) {
+		var req types.AuthRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		res, err := service.SignIn(req)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, res)
+	})
+
+	r.POST("/api/auth/logout", func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if err := service.SignOut(token); err != nil {
+			handleError(c, err)
+			return
+		}
+		c.Status(http.StatusOK)
+	})
+
+	r.POST("/api/auth/change-password", func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		var req types.ChangePasswordRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		res, err := service.ChangePassword(token, req.Password)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, res)
+	})
+
+	r.GET("/api/auth/role", func(c *gin.Context) {
+		userID := c.Query("userId")
+		if userID == "" {
+			handleError(c, types.BadRequest("userId required"))
+			return
+		}
+		role, err := service.GetUserRole(userID)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"role": role})
 	})
 
 	r.Run(":8080")

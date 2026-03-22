@@ -438,7 +438,7 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h3 className="mb-4 text-gray-900">Quick Actions</h3>
               <div className="space-y-3">
-                {role === 'owner' && (
+                {role === 'OWNER' && (
                   <button
                     onClick={() => router.push('/user-management')}
                     className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition"

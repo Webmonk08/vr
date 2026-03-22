@@ -22,6 +22,7 @@ const SignupPage = () => {
     }
     setError('');
     try {
+      console.log("Gonna sign UP")
       await signUp(email, password);
       router.push('/');
     } catch (err) {

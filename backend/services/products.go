@@ -20,17 +20,13 @@ func NewService(sbClient *supabase.Client) *Service {
 func (s *Service) GetProducts() ([]types.Product, error) {
 	var dbProducts []types.DBProduct
 
-	// Fetch products with variants
-	fmt.Println("Going for supabase")
 	_, err := s.client.From("products").
 		Select("*, product_variants(*)", "exact", false).
 		ExecuteTo(&dbProducts)
-	fmt.Println(err)
 	if err != nil {
-		return nil, err
+		return nil, types.InternalServerError("Failed to fetch products")
 	}
-	fmt.Println("Fetched")
-	// Map DB types to Response types
+
 	var products []types.Product
 	for _, p := range dbProducts {
 		var variants []types.ProductVariant
@@ -57,33 +53,29 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 }
 
 func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
-	// 1. Insert Product
 	var newProduct []struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	}
-	// ExecuteTo returns (int64, error)
 	_, err := s.client.From("products").Insert(map[string]interface{}{
 		"name": product.Name,
 	}, false, "", "", "").ExecuteTo(&newProduct)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert product: %v", err)
+		return nil, types.InternalServerError("Failed to insert product")
 	}
 	if len(newProduct) == 0 {
-		return nil, fmt.Errorf("no product returned after insert")
+		return nil, types.InternalServerError("No product returned after insert")
 	}
 
 	createdProductID := newProduct[0].ID
 	var createdVariants []types.ProductVariant
 
-	// 2. Insert Variants
 	for _, v := range product.Variants {
 		var val float64
 		var unit string
-		// Basic parsing
 		fmt.Sscanf(v.Weight, "%f %s", &val, &unit)
 		if unit == "" {
-			unit = "kg" // default
+			unit = "kg"
 		}
 
 		var newVariant []types.DBProductVariant
@@ -100,7 +92,7 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 			"isdefault":        v.Isdefault,
 		}, false, "", "", "").ExecuteTo(&newVariant)
 		if err != nil {
-			return nil, fmt.Errorf("failed to insert variant: %v", err)
+			return nil, types.InternalServerError("Failed to insert variant")
 		}
 		if len(newVariant) > 0 {
 			dbV := newVariant[0]
@@ -126,13 +118,11 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 }
 
 func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, error) {
-	// Update Product Name
-	// Execute returns ([]byte, int64, error)
 	_, _, err := s.client.From("products").Update(map[string]interface{}{
 		"name": data.Name,
 	}, "", "").Eq("id", fmt.Sprintf("%d", id)).Execute()
 	if err != nil {
-		return nil, err
+		return nil, types.InternalServerError("Failed to update product name")
 	}
 
 	for _, v := range data.Variants {
@@ -156,21 +146,15 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 		}
 
 		if v.ID != 0 {
-			// Update
 			_, _, err := s.client.From("product_variants").Update(updates, "", "").Eq("id", fmt.Sprintf("%d", v.ID)).Execute()
 			if err != nil {
-				return nil, err
+				return nil, types.InternalServerError("Failed to update product variant")
 			}
 		} else {
-			// Insert new variant for this product
 			updates["product_id"] = id
-			// Insert returns (int64, error) if using ExecuteTo, or ([]byte, int64, error) if using Execute?
-			// Actually Insert(...).Execute() returns ([]byte, int64, error).
-			// Insert(...).ExecuteTo(...) returns (int64, error).
-			// We can use Execute() if we don't need the result, but Insert defaults to returning representation usually?
 			_, _, err := s.client.From("product_variants").Insert(updates, false, "", "", "").Execute()
 			if err != nil {
-				return nil, err
+				return nil, types.InternalServerError("Failed to insert new product variant")
 			}
 		}
 	}

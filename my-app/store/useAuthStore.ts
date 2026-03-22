@@ -1,7 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/utils/supabase";
+
+interface User {
+  id: string;
+  email?: string;
+}
+
+interface Session {
+  access_token: string;
+  refresh_token: string;
+}
 
 interface AuthState {
   user: User | null;
@@ -13,6 +21,8 @@ interface AuthState {
   fetchRole: (userId: string) => Promise<void>;
 }
 
+const BACKEND_URL = "http://localhost:8080";
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -20,47 +30,56 @@ export const useAuthStore = create<AuthState>()(
       session: null,
       role: null,
       fetchRole: async (userId) => {
-        const { data, error } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', userId)
-          .single();
-        if (data) {
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/auth/role?userId=${userId}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || "Failed to fetch role");
           set({ role: data.role });
-          console.log('user role', data.role)
-        } else if (error) {
+          console.log('user role', data.role);
+        } catch (error: any) {
           console.error("Error fetching role:", error);
         }
       },
       login: async (email, password) => {
-        console.log("Request recieved")
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-
+        console.log("Request recieved");
+        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
-        if (error) {
-          console.log("HI")
-          throw error
-        };
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || data.error || "Login failed");
+        }
         set({ user: data.user, session: data.session });
         if (data.user) {
           await get().fetchRole(data.user.id);
         }
       },
       signUp: async (email, password) => {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
+        const res = await fetch(`${BACKEND_URL}/api/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
-        if (error) throw error;
+        const data = await res.json();
+        console.log("data" , data)
+        if (!res.ok) throw new Error(data.message || data.error || "Signup failed");
         set({ user: data.user, session: data.session });
         if (data.user) {
           await get().fetchRole(data.user.id);
         }
       },
-      logout: () => {
-        supabase.auth.signOut();
+      logout: async () => {
+        const { session } = get();
+        if (session) {
+          await fetch(`${BACKEND_URL}/api/auth/logout`, {
+            method: "POST",
+            headers: {
+              "Authorization": session.access_token,
+            },
+          });
+        }
         set({ user: null, session: null, role: null });
       },
     }),

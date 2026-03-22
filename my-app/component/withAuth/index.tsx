@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 const withAuth = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  roles: Array<'admin' | 'customer' | 'owner'>
+  roles: Array<'ADMIN' | 'CUSTOMER' | 'OWNER'>
 ) => {
   const WithAuth: React.FC<P> = (props) => {
     const { user, role } = useAuthStore();
