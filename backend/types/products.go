@@ -10,17 +10,17 @@ type DBProduct struct {
 }
 
 type DBProductVariant struct {
-	ID              int     `json:"id"`
-	ProductID       int     `json:"product_id"`
-	Price           float64 `json:"price"`
-	StockQuantity   int     `json:"stock_quantity"`
-	WeightValue     float64 `json:"weight_value"`
-	WeightUnit      string  `json:"weight_unit"`
-	SKU             string  `json:"sku"`
-	Description     string  `json:"description"`
-	LongDescription string  `json:"long_description"`
-	Image           []string  `json:"image"`
-	Isdefault       bool    `json:"isdefault"`
+	ID              int      `json:"id"`
+	ProductID       int      `json:"product_id"`
+	Price           float64  `json:"price"`
+	StockQuantity   int      `json:"stock_quantity"`
+	WeightValue     float64  `json:"weight_value"`
+	WeightUnit      string   `json:"weight_unit"`
+	SKU             string   `json:"sku"`
+	Description     string   `json:"description"`
+	LongDescription string   `json:"long_description"`
+	Image           []string `json:"image"`
+	Isdefault       bool     `json:"isdefault"`
 }
 
 type DBCartItem struct {
@@ -39,15 +39,15 @@ type Product struct {
 }
 
 type ProductVariant struct {
-	ID               int     `json:"id"`
-	Price            float64 `json:"price"`
-	Weight           string  `json:"weight"`
-	Stock            int     `json:"stock"`
-	ShortDescription string  `json:"shortDescription"`
-	Description      string  `json:"description"`
-	SKU              string  `json:"sku"`
-	Image            []string  `json:"image"`
-	Isdefault        bool    `json:"isdefault"`
+	ID               int      `json:"id"`
+	Price            float64  `json:"price"`
+	Weight           string   `json:"weight"`
+	Stock            int      `json:"stock"`
+	ShortDescription string   `json:"shortDescription"`
+	Description      string   `json:"description"`
+	SKU              string   `json:"sku"`
+	Image            []string `json:"image"`
+	Isdefault        bool     `json:"isdefault"`
 }
 type CartProduct struct {
 	ID   int    `json:"id"`
@@ -112,4 +112,6 @@ type User struct {
 	Name     string `json:"name"`
 	Address  string `json:"address"`
 	Phone_no string `json:"phone_no"`
+	Role     string `json:"role"`
+	Email    string `json:"email"`
 }

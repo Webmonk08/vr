@@ -34,8 +34,9 @@ export const useAuthStore = create<AuthState>()(
           const res = await fetch(`${BACKEND_URL}/api/auth/role?userId=${userId}`);
           const data = await res.json();
           if (!res.ok) throw new Error(data.message || "Failed to fetch role");
-          set({ role: data.role });
-          console.log('user role', data.role);
+          const userRole = data.role || "customer";
+          set({ role: userRole });
+          console.log('user role', userRole);
         } catch (error: any) {
           console.error("Error fetching role:", error);
         }

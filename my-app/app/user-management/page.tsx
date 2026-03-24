@@ -33,7 +33,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
 
   const [editPayload, setEditPayload] = useState<UpdateUserPayload>({});
 
-  const roles: Array<'admin' | 'manager'> = ['admin', 'manager'];
+  const roles: Array<'admin' | 'manager' | 'owner' | 'customer'> = ['admin', 'manager', 'owner', 'customer'];
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -384,7 +384,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Role *</label>
                   <select
                     value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'manager' })}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'manager' | 'owner' | 'customer' })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   >
@@ -438,48 +438,54 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
 
               <form onSubmit={handleEditUser} className="space-y-4">
                 <div>
-                  <label className="block mb-2 text-gray-900">Full Name *</label>
+                  <label className="block mb-2 text-gray-900">Full Name</label>
                   <input
                     type="text"
                     value={editPayload.name || ''}
                     onChange={(e) => setEditPayload({ ...editPayload, name: e.target.value })}
-                    required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-gray-900">Email Address *</label>
+                  <label className="block mb-2 text-gray-900">Email Address</label>
                   <input
                     type="email"
                     value={editPayload.email || ''}
                     onChange={(e) => setEditPayload({ ...editPayload, email: e.target.value })}
-                    required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-gray-900">Phone Number *</label>
+                  <label className="block mb-2 text-gray-900">Phone Number</label>
                   <input
                     type="tel"
                     value={editPayload.phone_no || ''}
                     onChange={(e) => setEditPayload({ ...editPayload, phone_no: e.target.value })}
-                    required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-gray-900">Role *</label>
+                  <label className="block mb-2 text-gray-900">Password (leave empty to keep current)</label>
+                  <input
+                    type="password"
+                    value={editPayload.password || ''}
+                    onChange={(e) => setEditPayload({ ...editPayload, password: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-gray-900">Role</label>
                   <select
                     value={editPayload.role || ''}
-                    onChange={(e) => setEditPayload({ ...editPayload, role: e.target.value as 'admin' | 'manager' })}
-                    required
+                    onChange={(e) => setEditPayload({ ...editPayload, role: e.target.value as 'admin' | 'manager' | 'owner' | 'customer' })}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   >
                     {roles.map(role => (
-                      <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
+                      <option key={role} value={role}>{role }</option>
                     ))}
                   </select>
                 </div>

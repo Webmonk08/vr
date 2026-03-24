@@ -311,4 +311,4 @@ function CartPage({ onNavigate }: CartPageProps) {
   );
 }
 
-export default withAuth(CartPage, ['ADMIN', 'customer', 'OWNER']);
+export default withAuth(CartPage, ['admin', 'manager', 'customer']);

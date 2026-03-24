@@ -5,14 +5,14 @@ export interface UserManagementData {
   name: string;
   email: string;
   phone_no: string;
-  role: 'admin' | 'manager';
+  role: 'admin' | 'manager' | 'owner' | 'customer';
 }
 
 export interface CreateUserPayload {
   name: string;
   email: string;
   phone_no: string;
-  role: 'admin' | 'manager';
+  role: 'admin' | 'manager' | 'owner' | 'customer';
   password: string;
 }
 
@@ -20,7 +20,8 @@ export interface UpdateUserPayload {
   name?: string;
   email?: string;
   phone_no?: string;
-  role?: 'admin' | 'manager';
+  password?: string;
+  role?: 'admin' | 'manager' | 'owner' | 'customer';
 }
 
 export class UserManagementService {

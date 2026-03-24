@@ -67,6 +67,60 @@ func doAuthRequest(method, endpoint string, body interface{}, authHeader string)
 	return respData, nil
 }
 
+// Helper for making Supabase Admin API calls (for password updates)
+func doAuthAdminRequest(method, endpoint string, body interface{}) ([]byte, error) {
+	apiURL := os.Getenv("SUPABASE_API_URL")
+	apiKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+	var reqBody io.Reader
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, types.InternalServerError("Failed to marshal request body")
+		}
+		reqBody = bytes.NewBuffer(jsonBody)
+	}
+
+	req, err := http.NewRequest(method, apiURL+endpoint, reqBody)
+	if err != nil {
+		return nil, types.InternalServerError("Failed to create request")
+	}
+
+	req.Header.Set("apikey", apiKey)
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, types.InternalServerError("Failed to execute request")
+	}
+	defer resp.Body.Close()
+
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, types.InternalServerError("Failed to read response body")
+	}
+
+	if resp.StatusCode >= 400 {
+		var errRes map[string]interface{}
+		json.Unmarshal(respData, &errRes)
+		msg := "Auth admin error"
+		if m, ok := errRes["msg"].(string); ok {
+			msg = m
+		} else if m, ok := errRes["message"].(string); ok {
+			msg = m
+		}
+		return nil, &types.APIError{
+			StatusCode: resp.StatusCode,
+			Message:    msg,
+			Details:    string(respData),
+		}
+	}
+
+	return respData, nil
+}
+
 func (s *Service) SignUp(req types.AuthRequest) (map[string]interface{}, error) {
 	data, err := doAuthRequest("POST", "/auth/v1/signup", req, "")
 	if err != nil {

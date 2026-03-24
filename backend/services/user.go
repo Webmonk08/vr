@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"strings"
 	"vr/types"
 )
 
@@ -47,13 +48,14 @@ func (s *Service) UpdateProfile(req types.UpdateProfileRequest) (*types.User, er
 // --- User Management (Admin) ---
 
 func isValidRole(role string) bool {
-	return role == "admin" || role == "manager"
+	r := strings.ToUpper(role)
+	return r == "ADMIN" || r == "MANAGER" || r == "OWNER" || r == "CUSTOMER"
 }
 
 func (s *Service) CreateUser(req types.CreateUserRequest) (*types.UserManagementResponse, error) {
 	// Validate role
 	if !isValidRole(req.Role) {
-		return nil, types.BadRequest("Invalid role: must be 'admin' or 'manager'")
+		return nil, types.BadRequest("Invalid role: must be 'admin', 'manager', 'owner', or 'customer'")
 	}
 
 	// 1. Create the auth user via Supabase Auth signup
@@ -81,22 +83,21 @@ func (s *Service) CreateUser(req types.CreateUserRequest) (*types.UserManagement
 		return nil, types.InternalServerError("Failed to extract user ID from auth response")
 	}
 
-	// 2. Insert into the users table with role and other details
-	insertData := map[string]interface{}{
-		"id":       userID,
+	// 2. Update the users table with role and other details (the trigger already created the record)
+	updates := map[string]interface{}{
 		"name":     req.Name,
-		"role":     req.Role,
+		"address":  req.Address,
+		"role":     strings.ToUpper(req.Role),
 		"phone_no": req.PhoneNo,
-		"email":    req.Email,
 	}
 
 	var users []types.UserManagementResponse
-	_, err = s.client.From("users").Insert(insertData, false, "", "", "").ExecuteTo(&users)
+	_, err = s.client.From("users").Update(updates, "", "").Eq("id", userID).ExecuteTo(&users)
 	if err != nil {
-		return nil, types.InternalServerError("Failed to insert user into database")
+		return nil, types.InternalServerError("Failed to update user details in database")
 	}
 	if len(users) == 0 {
-		return nil, types.InternalServerError("No user returned after insert")
+		return nil, types.InternalServerError("No user returned after update")
 	}
 
 	return &users[0], nil
@@ -105,15 +106,18 @@ func (s *Service) CreateUser(req types.CreateUserRequest) (*types.UserManagement
 func (s *Service) UpdateUser(userID string, req types.UpdateUserRequest) (*types.UserManagementResponse, error) {
 	// Validate role if provided
 	if req.Role != "" && !isValidRole(req.Role) {
-		return nil, types.BadRequest("Invalid role: must be 'admin' or 'manager'")
+		return nil, types.BadRequest("Invalid role: must be 'admin', 'manager', 'owner', or 'customer'")
 	}
 
 	updates := map[string]interface{}{}
 	if req.Name != "" {
 		updates["name"] = req.Name
 	}
+	if req.Address != "" {
+		updates["address"] = req.Address
+	}
 	if req.Role != "" {
-		updates["role"] = req.Role
+		updates["role"] = strings.ToUpper(req.Role)
 	}
 	if req.PhoneNo != "" {
 		updates["phone_no"] = req.PhoneNo
@@ -122,7 +126,19 @@ func (s *Service) UpdateUser(userID string, req types.UpdateUserRequest) (*types
 		updates["email"] = req.Email
 	}
 
-	if len(updates) == 0 {
+	// If password is provided, update it via Supabase Auth admin API
+	if req.Password != "" {
+		authReq := types.AdminUpdateUserRequest{
+			Email:    req.Email,
+			Password: req.Password,
+		}
+		_, err := doAuthAdminRequest("PUT", "/auth/v1/admin/users/"+userID, authReq)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(updates) == 0 && req.Password == "" {
 		return nil, types.BadRequest("No fields to update")
 	}
 
@@ -147,7 +163,7 @@ func (s *Service) DeleteUser(userID string) error {
 
 func (s *Service) GetAllUsers() ([]types.UserManagementResponse, error) {
 	var users []types.UserManagementResponse
-	_, err := s.client.From("users").Select("id, name, role, phone_no, email", "", false).ExecuteTo(&users)
+	_, err := s.client.From("users").Select("id, name, address, role, phone_no, email", "", false).ExecuteTo(&users)
 	if err != nil {
 		return nil, types.InternalServerError("Failed to fetch users")
 	}

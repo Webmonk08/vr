@@ -6,33 +6,34 @@ import { useEffect, useState } from 'react';
 
 const withAuth = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  roles: Array<'ADMIN' | 'CUSTOMER' | 'OWNER'>
+  allowedRoles: string[]
 ) => {
   const WithAuth: React.FC<P> = (props) => {
     const { user, role } = useAuthStore();
-    console.log("with auth", role, "user", user)
-    console.log(!user)
     const router = useRouter();
     const [isChecking, setIsChecking] = useState(true);
-    console.log("entered")
-    console.log(user)
-    console.log("with-auth", role)
+    const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
 
     useEffect(() => {
-      // 1. Wait until the store is actually initialized 
-      if (user === undefined) return;
-
-      if (!user) {
+      const stored = localStorage.getItem('auth-storage');
+      const hasStoredAuth = stored ? !!JSON.parse(stored)?.state?.user : false;
+      setHasCheckedStorage(true);
+      
+      if (!user && !hasStoredAuth) {
         router.replace('/login');
-      } else if (role && !roles.includes(role as any)) {
-        router.replace('/');
-      } else if (role) {
+      } else if (user && role) {
+        const hasRole = allowedRoles.some(r => r.toLowerCase() === role.toLowerCase());
+        if (!hasRole) {
+          router.replace('/');
+        } else {
+          setIsChecking(false);
+        }
+      } else if (user && hasStoredAuth) {
         setIsChecking(false);
       }
     }, [user, role, router]);
 
-    // Show loading while we determine auth status to prevent premature redirects
-    if (isChecking || !user || !role || !roles.includes(role as any)) {
+    if (!hasCheckedStorage || isChecking) {
       return (
         <div className="flex h-screen items-center justify-center">
           <p>Loading Authentication...</p>
@@ -40,10 +41,8 @@ const withAuth = <P extends object>(
       );
     }
 
-    console.log("gonna return")
     return <WrappedComponent {...props} />;
   };
-  console.log("returoin")
   return WithAuth;
 };
 
