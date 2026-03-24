@@ -93,7 +93,7 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
                         onChange={handleInputChange}
                         required
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
-                        placeholder="John Doe"
+                        placeholder="Name"
                       />
                     </div>
 
@@ -109,7 +109,7 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
                         onChange={handleInputChange}
                         required
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
-                        placeholder="john@example.com"
+                        placeholder="abc@example.com"
                       />
                     </div>
                   </div>
@@ -204,8 +204,8 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
                     </div>
                     <div>
                       <h4 className="mb-1 text-gray-900">Phone</h4>
-                      <p className="text-gray-600">+1 (555) 123-4567</p>
-                      <p className="text-sm text-gray-500">Mon-Fri, 9am-6pm</p>
+                      <p className="text-gray-600">+91 7010300660</p>
+                      <p className="text-sm text-gray-500">Mon-Sat, 9am-9pm</p>
                     </div>
                   </div>
 
@@ -215,7 +215,7 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
                     </div>
                     <div>
                       <h4 className="mb-1 text-gray-900">Email</h4>
-                      <p className="text-gray-600">hello@riceharvest.com</p>
+                      <p className="text-gray-600">veerapathratraders@gmail.com</p>
                       <p className="text-sm text-gray-500">We reply within 24 hours</p>
                     </div>
                   </div>
@@ -226,8 +226,8 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
                     </div>
                     <div>
                       <h4 className="mb-1 text-gray-900">Address</h4>
-                      <p className="text-gray-600">123 Farm Road</p>
-                      <p className="text-gray-600">Green Valley, CA 94000</p>
+                      <p className="text-gray-600">2F6H+W3C</p>
+                      <p className="text-gray-600">Bathra Kaliyamman, Konduraja Line, Theni, Tamil Nadu 625531</p>
                     </div>
                   </div>
                 </div>
@@ -243,12 +243,9 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center pb-3 border-b border-green-600">
                     <span>Monday - Friday</span>
-                    <span className="font-medium">9:00 AM - 6:00 PM</span>
+                    <span className="font-medium">9:00 AM - 9:00 PM</span>
                   </div>
-                  <div className="flex justify-between items-center pb-3 border-b border-green-600">
-                    <span>Saturday</span>
-                    <span className="font-medium">10:00 AM - 4:00 PM</span>
-                  </div>
+                  
                   <div className="flex justify-between items-center">
                     <span>Sunday</span>
                     <span className="font-medium">Closed</span>

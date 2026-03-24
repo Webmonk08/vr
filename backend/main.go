@@ -278,5 +278,55 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"role": role})
 	})
 
+	// --- User Management Endpoints ---
+
+	r.GET("/api/users/getAll", func(c *gin.Context) {
+		users, err := service.GetAllUsers()
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, users)
+	})
+
+	r.POST("/api/users/create", func(c *gin.Context) {
+		var req types.CreateUserRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		user, err := service.CreateUser(req)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusCreated, user)
+	})
+
+	r.PUT("/api/users/update/:id", func(c *gin.Context) {
+		userID := c.Param("id")
+		var req types.UpdateUserRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		user, err := service.UpdateUser(userID, req)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, user)
+	})
+
+	r.DELETE("/api/users/delete/:id", func(c *gin.Context) {
+		userID := c.Param("id")
+		err := service.DeleteUser(userID)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	})
+
 	r.Run(":8080")
 }

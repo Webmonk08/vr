@@ -1,94 +1,63 @@
 
 'use client'
 import withAuth from '@/component/withAuth';
-import { Wheat, ShoppingBag, User, Search, Plus, Edit2, Trash2, Shield, Users, X, Mail, Phone, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { UserManagementService, UserManagementData, CreateUserPayload, UpdateUserPayload } from '@/services/userManagement.service';
+import { ShoppingBag, User, Search, Plus, Edit2, Trash2, Shield, Users, X, Phone, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface UserManagementPageProps {
   onNavigate: (page: string) => void;
 }
 
-interface UserData {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  role: 'OWNER' | 'ADMIN' | 'Manager' | 'Staff' | 'Customer';
-  status: 'Active' | 'Inactive';
-  joinDate: string;
-  avatar?: string;
-}
-
 const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
-  const [users, setUsers] = useState<UserData[]>([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@riceharvest.com',
-      phone: '+1 (555) 123-4567',
-      role: 'OWNER',
-      status: 'Active',
-      joinDate: '2023-01-15'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@riceharvest.com',
-      phone: '+1 (555) 234-5678',
-      role: 'ADMIN',
-      status: 'Active',
-      joinDate: '2023-03-20'
-    },
-    {
-      id: 3,
-      name: 'Mike Chen',
-      email: 'mike.chen@riceharvest.com',
-      phone: '+1 (555) 345-6789',
-      role: 'Manager',
-      status: 'Active',
-      joinDate: '2023-06-10'
-    },
-    {
-      id: 4,
-      name: 'Emily Davis',
-      email: 'emily.davis@example.com',
-      phone: '+1 (555) 456-7890',
-      role: 'Customer',
-      status: 'Active',
-      joinDate: '2024-01-05'
-    }
-  ]);
+  const [users, setUsers] = useState<UserManagementData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [editingUser, setEditingUser] = useState<UserManagementData | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<CreateUserPayload>({
     name: '',
     email: '',
-    phone: '',
-    role: 'Customer' as UserData['role'],
-    status: 'Active' as UserData['status']
+    phone_no: '',
+    role: 'manager',
+    password: '',
   });
 
-  const roles: UserData['role'][] = ['OWNER', 'ADMIN', 'Manager', 'Staff', 'Customer'];
+  const [editPayload, setEditPayload] = useState<UpdateUserPayload>({});
+
+  const roles: Array<'admin' | 'manager'> = ['admin', 'manager'];
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await UserManagementService.getAll();
+      setUsers(data || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'OWNER':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'ADMIN':
+      case 'admin':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'Manager':
+      case 'manager':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Staff':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Customer':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -96,56 +65,82 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'OWNER':
-      case 'ADMIN':
+      case 'admin':
         return <Shield className="w-4 h-4" />;
-      case 'Manager':
-      case 'Staff':
+      case 'manager':
         return <Users className="w-4 h-4" />;
       default:
         return <User className="w-4 h-4" />;
     }
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user: UserData = {
-      id: users.length + 1,
-      ...newUser,
-      joinDate: new Date().toISOString().split('T')[0]
-    };
-    setUsers([...users, user]);
-    setNewUser({ name: '', email: '', phone: '', role: 'Customer', status: 'Active' });
-    setShowAddModal(false);
+    try {
+      setActionLoading(true);
+      await UserManagementService.create(newUser);
+      setNewUser({ name: '', email: '', phone_no: '', role: 'manager', password: '' });
+      setShowAddModal(false);
+      await fetchUsers();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create user');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleEditUser = (e: React.FormEvent) => {
+  const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+    if (!editingUser) return;
+    try {
+      setActionLoading(true);
+      await UserManagementService.update(editingUser.id, editPayload);
       setShowEditModal(false);
       setEditingUser(null);
+      setEditPayload({});
+      await fetchUsers();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update user');
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleDeleteUser = () => {
-    if (deletingUserId) {
-      setUsers(users.filter(u => u.id !== deletingUserId));
+  const handleDeleteUser = async () => {
+    if (!deletingUserId) return;
+    try {
+      setActionLoading(true);
+      await UserManagementService.delete(deletingUserId);
       setShowDeleteConfirm(false);
       setDeletingUserId(null);
+      await fetchUsers();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete user');
+    } finally {
+      setActionLoading(false);
     }
+  };
+
+  const openEditModal = (user: UserManagementData) => {
+    setEditingUser(user);
+    setEditPayload({
+      name: user.name,
+      email: user.email,
+      phone_no: user.phone_no,
+      role: user.role,
+    });
+    setShowEditModal(true);
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     return matchesSearch && matchesRole;
   });
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
@@ -166,7 +161,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -182,35 +177,23 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Active Users</p>
-                <h3 className="text-3xl text-gray-900">{users.filter(u => u.status === 'Active').length}</h3>
+                <p className="text-sm text-gray-600 mb-1">Admins</p>
+                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'admin').length}</h3>
+              </div>
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-red-700" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Managers</p>
+                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'manager').length}</h3>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-blue-700" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">ADMINs</p>
-                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'ADMIN' || u.role === 'OWNER').length}</h3>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-purple-700" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Customers</p>
-                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'Customer').length}</h3>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-green-700" />
+                <Users className="w-6 h-6 text-blue-700" />
               </div>
             </div>
           </div>
@@ -236,110 +219,100 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
             >
               <option value="all">All Roles</option>
               {roles.map(role => (
-                <option key={role} value={role}>{role}</option>
+                <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Users List */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm text-gray-600">User</th>
-                  <th className="px-6 py-4 text-left text-sm text-gray-600">Contact</th>
-                  <th className="px-6 py-4 text-left text-sm text-gray-600">Role</th>
-                  <th className="px-6 py-4 text-left text-sm text-gray-600">Status</th>
-                  <th className="px-6 py-4 text-left text-sm text-gray-600">Join Date</th>
-                  <th className="px-6 py-4 text-right text-sm text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-green-700" />
-                        </div>
-                        <div>
-                          <p className="text-gray-900">{user.name}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="w-4 h-4" />
-                        {user.phone}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${getRoleColor(user.role)}`}>
-                        {getRoleIcon(user.role)}
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${user.status === 'Active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                        }`}>
-                        <span className={`w-2 h-2 rounded-full mr-2 ${user.status === 'Active' ? 'bg-green-600' : 'bg-red-600'
-                          }`}></span>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(user.joinDate).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingUser(user);
-                            setShowEditModal(true);
-                          }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                          title="Edit User"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDeletingUserId(user.id);
-                            setShowDeleteConfirm(true);
-                          }}
-                          disabled={user.role === 'OWNER'}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={user.role === 'OWNER' ? 'Cannot delete OWNER' : 'Delete User'}
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 text-red-700">
+            {error}
+            <button onClick={fetchUsers} className="ml-4 underline">Retry</button>
           </div>
+        )}
 
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12">
-              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No users found</p>
+        {/* Loading State */}
+        {loading ? (
+          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+            <Loader2 className="w-10 h-10 text-green-700 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-500">Loading users...</p>
+          </div>
+        ) : (
+          /* Users List */
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm text-gray-600">User</th>
+                    <th className="px-6 py-4 text-left text-sm text-gray-600">Contact</th>
+                    <th className="px-6 py-4 text-left text-sm text-gray-600">Role</th>
+                    <th className="px-6 py-4 text-right text-sm text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 transition">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-green-700" />
+                          </div>
+                          <div>
+                            <p className="text-gray-900">{user.name}</p>
+                            <p className="text-sm text-gray-500">{user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Phone className="w-4 h-4" />
+                          {user.phone_no}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${getRoleColor(user.role)}`}>
+                          {getRoleIcon(user.role)}
+                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEditModal(user)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Edit User"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDeletingUserId(user.id);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-12">
+                <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No users found</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add User Modal */}
@@ -383,11 +356,24 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                 </div>
 
                 <div>
+                  <label className="block mb-2 text-gray-900">Password *</label>
+                  <input
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
+                    placeholder="Minimum 6 characters"
+                  />
+                </div>
+
+                <div>
                   <label className="block mb-2 text-gray-900">Phone Number *</label>
                   <input
                     type="tel"
-                    value={newUser.phone}
-                    onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                    value={newUser.phone_no}
+                    onChange={(e) => setNewUser({ ...newUser, phone_no: e.target.value })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                     placeholder="+1 (555) 123-4567"
@@ -398,26 +384,13 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Role *</label>
                   <select
                     value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserData['role'] })}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'manager' })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   >
                     {roles.map(role => (
-                      <option key={role} value={role}>{role}</option>
+                      <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-gray-900">Status *</label>
-                  <select
-                    value={newUser.status}
-                    onChange={(e) => setNewUser({ ...newUser, status: e.target.value as UserData['status'] })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
                   </select>
                 </div>
 
@@ -431,8 +404,10 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-green-700 hover:bg-green-800 text-white rounded-full transition"
+                    disabled={actionLoading}
+                    className="flex-1 px-6 py-3 bg-green-700 hover:bg-green-800 text-white rounded-full transition disabled:opacity-50 flex items-center justify-center gap-2"
                   >
+                    {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     Add User
                   </button>
                 </div>
@@ -453,6 +428,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingUser(null);
+                    setEditPayload({});
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition"
                 >
@@ -465,8 +441,8 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Full Name *</label>
                   <input
                     type="text"
-                    value={editingUser.name}
-                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                    value={editPayload.name || ''}
+                    onChange={(e) => setEditPayload({ ...editPayload, name: e.target.value })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   />
@@ -476,8 +452,8 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Email Address *</label>
                   <input
                     type="email"
-                    value={editingUser.email}
-                    onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                    value={editPayload.email || ''}
+                    onChange={(e) => setEditPayload({ ...editPayload, email: e.target.value })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   />
@@ -487,8 +463,8 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Phone Number *</label>
                   <input
                     type="tel"
-                    value={editingUser.phone}
-                    onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                    value={editPayload.phone_no || ''}
+                    onChange={(e) => setEditPayload({ ...editPayload, phone_no: e.target.value })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   />
@@ -497,31 +473,14 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                 <div>
                   <label className="block mb-2 text-gray-900">Role *</label>
                   <select
-                    value={editingUser.role}
-                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as UserData['role'] })}
-                    required
-                    disabled={editingUser.role === 'OWNER'}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {roles.map(role => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
-                  {editingUser.role === 'OWNER' && (
-                    <p className="text-xs text-gray-500 mt-1">OWNER role cannot be changed</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-gray-900">Status *</label>
-                  <select
-                    value={editingUser.status}
-                    onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value as UserData['status'] })}
+                    value={editPayload.role || ''}
+                    onChange={(e) => setEditPayload({ ...editPayload, role: e.target.value as 'admin' | 'manager' })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    {roles.map(role => (
+                      <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -531,6 +490,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                     onClick={() => {
                       setShowEditModal(false);
                       setEditingUser(null);
+                      setEditPayload({});
                     }}
                     className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition"
                   >
@@ -538,8 +498,10 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-green-700 hover:bg-green-800 text-white rounded-full transition"
+                    disabled={actionLoading}
+                    className="flex-1 px-6 py-3 bg-green-700 hover:bg-green-800 text-white rounded-full transition disabled:opacity-50 flex items-center justify-center gap-2"
                   >
+                    {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     Save Changes
                   </button>
                 </div>
@@ -574,16 +536,16 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
               </button>
               <button
                 onClick={handleDeleteUser}
-                className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition"
+                disabled={actionLoading}
+                className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Delete User
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Footer */}
     </div>
   );
 }
