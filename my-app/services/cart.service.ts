@@ -1,72 +1,93 @@
 import { CartItem } from "@/types/cart.types";
+import { apiClient, ApiException } from "@/lib/api-client";
+import { toast } from "@/store/useToastStore";
 
 export class CartService {
   static async getCart(userId: string | undefined): Promise<CartItem[]> {
-    const url = userId ? `/api/cart/get?user_id=${userId}` : "api/cart/get";
-    const response = await fetch(url);
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data.message || data.error || "Failed to fetch cart");
+    try {
+      const url = userId ? `/api/cart/get?user_id=${userId}` : "/api/cart/get";
+      const data = await apiClient.get<CartItem[]>(url);
+      return data;
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to fetch cart');
+      }
+      throw error;
     }
-    console.log("response", data)
-
-    return data;
   }
 
   static async addItem(productId: number, variantId: number, userId: string): Promise<CartItem> {
-    const response = await fetch("/api/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ product_id: productId, variant_id: variantId, user_id: userId }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || data.error || "Failed to add item to cart");
+    try {
+      const data = await apiClient.post<CartItem>('/api/cart/add', {
+        product_id: productId,
+        variant_id: variantId,
+        user_id: userId,
+      });
+      toast.success('Item added to cart');
+      return data;
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to add item to cart');
+      }
+      throw error;
     }
-    return data;
   }
 
   static async updateItem(cartId: number, productVariantId: number, quantity: number, userId: string): Promise<void> {
-    const response = await fetch("/api/cart/update", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cart_id: cartId, product_variant_id: productVariantId, quantity: quantity, user_id: userId }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || data.error || "Failed to update item quantity");
+    try {
+      await apiClient.post('/api/cart/update', {
+        cart_id: cartId,
+        product_variant_id: productVariantId,
+        quantity: quantity,
+        user_id: userId,
+      });
+      if (quantity <= 0) {
+        toast.success('Item removed from cart');
+      } else {
+        toast.success('Cart updated');
+      }
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to update cart');
+      }
+      throw error;
     }
   }
 
   static async removeItem(cartId: number, productId: number): Promise<void> {
-    const response = await fetch("/api/cart/remove", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cart_id: cartId, product_id: productId }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || data.error || "Failed to remove item from cart");
+    try {
+      await apiClient.post('/api/cart/remove', {
+        cart_id: cartId,
+        product_id: productId,
+      });
+      toast.success('Item removed from cart');
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to remove item from cart');
+      }
+      throw error;
     }
   }
 
   static async clearCart(userId: string): Promise<void> {
-    const response = await fetch("/api/cart/clear", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || data.error || "Failed to clear cart");
+    try {
+      await apiClient.post('/api/cart/clear', { user_id: userId });
+      toast.success('Cart cleared');
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to clear cart');
+      }
+      throw error;
     }
   }
 }

@@ -55,7 +55,10 @@ export default function ProfilePage() {
   });
 
   const passwordMutation = useMutation({
-    mutationFn: changePassword,
+    mutationFn: async (password: string) => {
+      const session = useAuthStore.getState().session;
+      return changePassword(password, session?.access_token || '');
+    },
     onSuccess: () => {
       alert('Password changed successfully!');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -80,6 +83,7 @@ export default function ProfilePage() {
 
   const handleUpdateDetails = () => {
     updateMutation.mutate({
+      UserId: user?.id,
       name: editedData.name,
       phone: editedData.phone,
       address: editedData.address

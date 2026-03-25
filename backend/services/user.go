@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"vr/types"
 )
@@ -33,10 +34,12 @@ func (s *Service) UpdateProfile(req types.UpdateProfileRequest) (*types.User, er
 	if len(updates) == 0 {
 		return s.GetProfile(req.UserID)
 	}
-
+	fmt.Println(req.UserID)
+fmt.Println(updates , "Updates for the Profile page")
 	var users []types.User
 	_, err := s.client.From("users").Update(updates, "", "").Eq("id", req.UserID).ExecuteTo(&users)
 	if err != nil {
+		fmt.Println(err)
 		return nil, types.InternalServerError("Failed to update user profile")
 	}
 	if len(users) == 0 {
@@ -92,7 +95,7 @@ func (s *Service) CreateUser(req types.CreateUserRequest) (*types.UserManagement
 	}
 
 	var users []types.UserManagementResponse
-	_, err = s.client.From("users").Update(updates, "", "").Eq("id", userID).ExecuteTo(&users)
+	_ , err = s.client.From("users").Update(updates, "representation", "exact").Eq("id", userID).ExecuteTo(&users)
 	if err != nil {
 		return nil, types.InternalServerError("Failed to update user details in database")
 	}
@@ -105,6 +108,7 @@ func (s *Service) CreateUser(req types.CreateUserRequest) (*types.UserManagement
 
 func (s *Service) UpdateUser(userID string, req types.UpdateUserRequest) (*types.UserManagementResponse, error) {
 	// Validate role if provided
+	fmt.Println(req.Role);
 	if req.Role != "" && !isValidRole(req.Role) {
 		return nil, types.BadRequest("Invalid role: must be 'admin', 'manager', 'owner', or 'customer'")
 	}
@@ -118,6 +122,7 @@ func (s *Service) UpdateUser(userID string, req types.UpdateUserRequest) (*types
 	}
 	if req.Role != "" {
 		updates["role"] = strings.ToUpper(req.Role)
+		fmt.Println(updates["role"]); 
 	}
 	if req.PhoneNo != "" {
 		updates["phone_no"] = req.PhoneNo
@@ -143,7 +148,9 @@ func (s *Service) UpdateUser(userID string, req types.UpdateUserRequest) (*types
 	}
 
 	var users []types.UserManagementResponse
+	fmt.Println(updates["role"])
 	_, err := s.client.From("users").Update(updates, "", "").Eq("id", userID).ExecuteTo(&users)
+	fmt.Println("Error occured while updating the user" , err!=nil)
 	if err != nil {
 		return nil, types.InternalServerError("Failed to update user")
 	}

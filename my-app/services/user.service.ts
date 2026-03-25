@@ -1,5 +1,5 @@
-import { useAuthStore } from '@/store/useAuthStore';
-import Error from 'next/error';
+import { apiClient, ApiException } from "@/lib/api-client";
+import { toast } from "@/store/useToastStore";
 
 export interface dataProfile {
   id: string;
@@ -10,66 +10,55 @@ export interface dataProfile {
 }
 
 export const getUserProfile = async (userid: string): Promise<dataProfile | null> => {
-
-  console.log("user profile Fetching")
-  const res = await fetch('api/data/getdataProfile', {
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      "userId": userid
-    })
-  });
-
-  if (!res) return null;
-
-  const data = await res.json()
-  console.log("data", data)
-  return {
-    id: data?.id,
-    email: data?.email || '',
-    name: data?.name || '',
-    address: data?.address || '',
-    phone: data?.phone_no || '',
-  };
-};
-
-export const updateUser = async (
-  data: { name?: string; address?: string; phone?: string }
-) => {
   try {
-    const res = await fetch('/api/data/update', {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/json'
-      },
-      body: JSON.stringify(data)
+    const data = await apiClient.post<dataProfile>('/api/data/getdataProfile', {
+      userId: userid
     });
-    const result = await res.json();
-
-    if (!res.ok) throw new Error(result.message || result.error || "Update failed");
-
-    return result;
-  } catch (e: any) {
-    throw e;
+    return {
+      id: data?.id,
+      email: data?.email || '',
+      name: data?.name || '',
+      address: data?.address || '',
+      phone: data?.phone || '',
+    };
+  } catch (error) {
+    if (error instanceof ApiException) {
+      toast.error(error.getUserMessage());
+    } else {
+      toast.error('Failed to fetch profile');
+    }
+    return null;
   }
 };
-export const changePassword = async (password: string) => {
-  const session = useAuthStore.getState().session;
-  const res = await fetch(`http://localhost:8080/api/auth/change-password`, {
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json',
-      'Authorization': session ? session.access_token : ''
-    },
-    body: JSON.stringify({ password })
-  });
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || data.error || "Password change failed");
+export const updateUser = async (data: { UserId?: string; name?: string; address?: string; phone?: string }) => {
+  try {
+    const result = await apiClient.post('/api/data/update', data);
+    toast.success('Profile updated successfully');
+    return result;
+  } catch (error) {
+    if (error instanceof ApiException) {
+      toast.error(error.getUserMessage());
+    } else {
+      toast.error('Failed to update profile');
+    }
+    throw error;
   }
+};
 
-  return data;
-}
+export const changePassword = async (password: string, accessToken: string) => {
+  try {
+    const data = await apiClient.post('/api/auth/change-password', { password }, {
+      headers: { Authorization: accessToken },
+    });
+    toast.success('Password changed successfully');
+    return data;
+  } catch (error) {
+    if (error instanceof ApiException) {
+      toast.error(error.getUserMessage());
+    } else {
+      toast.error('Failed to change password');
+    }
+    throw error;
+  }
+};

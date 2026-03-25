@@ -1,7 +1,7 @@
 
 'use client'
 import withAuth from '@/component/withAuth';
-import { UserManagementService, UserManagementData, CreateUserPayload, UpdateUserPayload } from '@/services/userManagement.service';
+import { UserManagementService, UserManagementData, CreateUserPayload, UpdateUserPayload , ROLES, Role} from '@/services/userManagement.service';
 import { ShoppingBag, User, Search, Plus, Edit2, Trash2, Shield, Users, X, Phone, Loader2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -27,18 +27,18 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
     name: '',
     email: '',
     phone_no: '',
-    role: 'manager',
+    role: ROLES.MANAGER,
     password: '',
   });
 
   const [editPayload, setEditPayload] = useState<UpdateUserPayload>({});
 
-  const roles: Array<'admin' | 'manager' | 'owner' | 'customer'> = ['admin', 'manager', 'owner', 'customer'];
+  const roles = ["Choose the Role " , 'admin', 'manager', 'owner', 'customer'];
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
+      setError(null)
       const data = await UserManagementService.getAll();
       setUsers(data || []);
     } catch (err: any) {
@@ -79,7 +79,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
     try {
       setActionLoading(true);
       await UserManagementService.create(newUser);
-      setNewUser({ name: '', email: '', phone_no: '', role: 'manager', password: '' });
+      setNewUser({ name: '', email: '', phone_no: '', role: ROLES.MANAGER, password: '' });
       setShowAddModal(false);
       await fetchUsers();
     } catch (err: any) {
@@ -94,6 +94,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
     if (!editingUser) return;
     try {
       setActionLoading(true);
+      console.log("Gonna Update teh user" , editPayload)
       await UserManagementService.update(editingUser.id, editPayload);
       setShowEditModal(false);
       setEditingUser(null);
@@ -140,7 +141,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
@@ -178,7 +179,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admins</p>
-                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'admin').length}</h3>
+                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === ROLES.ADMIN).length}</h3>
               </div>
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <Shield className="w-6 h-6 text-red-700" />
@@ -190,7 +191,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Managers</p>
-                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === 'manager').length}</h3>
+                <h3 className="text-3xl text-gray-900">{users.filter(u => u.role === ROLES.MANAGER).length}</h3>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-700" />
@@ -384,7 +385,7 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Role *</label>
                   <select
                     value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'manager' | 'owner' | 'customer' })}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as Role })}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   >
@@ -481,11 +482,14 @@ const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
                   <label className="block mb-2 text-gray-900">Role</label>
                   <select
                     value={editPayload.role || ''}
-                    onChange={(e) => setEditPayload({ ...editPayload, role: e.target.value as 'admin' | 'manager' | 'owner' | 'customer' })}
+                    onChange={(e) => {
+                      setEditPayload({ ...editPayload, role: e.target.value as Role })
+                      console.log(e.target.value)
+                    }}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
                   >
                     {roles.map(role => (
-                      <option key={role} value={role}>{role }</option>
+                      <option key={role} value={role}>{role}</option>
                     ))}
                   </select>
                 </div>

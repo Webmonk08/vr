@@ -4,6 +4,7 @@ import "./globals.css";
 import ReactQueryProvider from "./ReactQueryProvider";
 import Header from '../component/header';
 import Footer from "@/component/footer";
+import { ToastContainer } from "@/component/toast-container";
 
 const georama = Georama({
   subsets: ['latin'],
@@ -30,6 +31,7 @@ export default function RootLayout({
           <Header />
           {children}
           <Footer />
+          <ToastContainer />
         </ReactQueryProvider>
       </body>
     </html>

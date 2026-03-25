@@ -1,18 +1,27 @@
-const host = "http://localhost:8080";
+import { apiClient, ApiException } from "@/lib/api-client";
+import { toast } from "@/store/useToastStore";
 
+export const ROLES = {
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  OWNER: 'OWNER',
+  CUSTOMER: 'CUSTOMER',
+} as const;
+
+export type Role = typeof ROLES[keyof typeof ROLES];
 export interface UserManagementData {
   id: string;
   name: string;
   email: string;
   phone_no: string;
-  role: 'admin' | 'manager' | 'owner' | 'customer';
+  role: Role
 }
 
 export interface CreateUserPayload {
   name: string;
   email: string;
   phone_no: string;
-  role: 'admin' | 'manager' | 'owner' | 'customer';
+  role: Role
   password: string;
 }
 
@@ -21,52 +30,65 @@ export interface UpdateUserPayload {
   email?: string;
   phone_no?: string;
   password?: string;
-  role?: 'admin' | 'manager' | 'owner' | 'customer';
+  role?: Role
 }
 
 export class UserManagementService {
   static async getAll(): Promise<UserManagementData[]> {
-    const response = await fetch(`${host}/api/users/getAll`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || data.error || "Failed to fetch users");
+    try {
+      return await apiClient.get<UserManagementData[]>('/api/users/getAll');
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to fetch users');
+      }
+      throw error;
     }
-    return data;
   }
 
   static async create(payload: CreateUserPayload): Promise<UserManagementData> {
-    const response = await fetch(`${host}/api/users/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || data.error || 'Failed to create user');
+    try {
+      const data = await apiClient.post<UserManagementData>('/api/users/create', payload);
+      toast.success('User created successfully');
+      return data;
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to create user');
+      }
+      throw error;
     }
-    return data;
   }
 
   static async update(id: string, payload: UpdateUserPayload): Promise<UserManagementData> {
-    const response = await fetch(`${host}/api/users/update/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || data.error || 'Failed to update user');
+    try {
+      console.log(payload);
+      const data = await apiClient.put<UserManagementData>(`/api/users/update/${id}`, payload);
+      toast.success('User updated successfully');
+      return data;
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to update user');
+      }
+      throw error;
     }
-    return data;
   }
 
   static async delete(id: string): Promise<void> {
-    const response = await fetch(`${host}/api/users/delete/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || data.error || 'Failed to delete user');
+    try {
+      await apiClient.delete(`/api/users/delete/${id}`);
+      toast.success('User deleted successfully');
+    } catch (error) {
+      if (error instanceof ApiException) {
+        toast.error(error.getUserMessage());
+      } else {
+        toast.error('Failed to delete user');
+      }
+      throw error;
     }
   }
 }

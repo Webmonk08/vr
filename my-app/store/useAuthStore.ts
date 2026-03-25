@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { apiClient, ApiException } from "@/lib/api-client";
+import { toast } from "@/store/useToastStore";
 
 interface User {
   id: string;
@@ -15,13 +17,14 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   role: string | null;
+  isLoading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   logout: () => void;
   fetchRole: (userId: string) => Promise<void>;
+  clearError: () => void;
 }
-
-const BACKEND_URL = "http://localhost:8080";
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -29,59 +32,80 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       session: null,
       role: null,
+      isLoading: false,
+      error: null,
+      clearError: () => set({ error: null }),
       fetchRole: async (userId) => {
         try {
-          const res = await fetch(`${BACKEND_URL}/api/auth/role?userId=${userId}`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || "Failed to fetch role");
+          const data = await apiClient.get<{ role: string }>(`/api/auth/role?userId=${userId}`);
           const userRole = data.role || "customer";
           set({ role: userRole });
-          console.log('user role', userRole);
-        } catch (error: any) {
+        } catch (error) {
           console.error("Error fetching role:", error);
+          if (error instanceof ApiException) {
+            toast.error(error.getUserMessage());
+          }
         }
       },
       login: async (email, password) => {
-        console.log("Request recieved");
-        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || data.error || "Login failed");
-        }
-        set({ user: data.user, session: data.session });
-        if (data.user) {
-          await get().fetchRole(data.user.id);
+        set({ isLoading: true, error: null });
+        try {
+          const data = await apiClient.post<{ user: User; session: Session }>('/api/auth/login', { email, password });
+          set({ user: data.user, session: data.session, isLoading: false });
+          toast.success('Login successful!');
+          if (data.user) {
+            await get().fetchRole(data.user.id);
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          if (error instanceof ApiException) {
+            const message = error.getUserMessage();
+            set({ error: message });
+            toast.error(message);
+          } else {
+            const message = 'Login failed. Please try again.';
+            set({ error: message });
+            toast.error(message);
+          }
+          throw error;
         }
       },
       signUp: async (email, password) => {
-        const res = await fetch(`${BACKEND_URL}/api/auth/signup`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-        console.log("data" , data)
-        if (!res.ok) throw new Error(data.message || data.error || "Signup failed");
-        set({ user: data.user, session: data.session });
-        if (data.user) {
-          await get().fetchRole(data.user.id);
+        set({ isLoading: true, error: null });
+        try {
+          const data = await apiClient.post<{ user: User; session: Session }>('/api/auth/signup', { email, password });
+          set({ user: data.user, session: data.session, isLoading: false });
+          toast.success('Account created successfully!');
+          if (data.user) {
+            await get().fetchRole(data.user.id);
+          }
+        } catch (error) {
+          set({ isLoading: false });
+          if (error instanceof ApiException) {
+            const message = error.getUserMessage();
+            set({ error: message });
+            toast.error(message);
+          } else {
+            const message = 'Signup failed. Please try again.';
+            set({ error: message });
+            toast.error(message);
+          }
+          throw error;
         }
       },
       logout: async () => {
         const { session } = get();
-        if (session) {
-          await fetch(`${BACKEND_URL}/api/auth/logout`, {
-            method: "POST",
-            headers: {
-              "Authorization": session.access_token,
-            },
-          });
+        try {
+          if (session) {
+            await apiClient.post('/api/auth/logout', null, {
+              headers: { Authorization: session.access_token },
+            });
+          }
+        } catch (error) {
+          console.error("Logout error:", error);
         }
         set({ user: null, session: null, role: null });
+        toast.info('Logged out successfully');
       },
     }),
     { name: "auth-storage" }

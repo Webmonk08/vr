@@ -22,9 +22,27 @@ func handleError(c *gin.Context, err error) {
 	}
 	c.JSON(http.StatusInternalServerError, types.APIError{
 		StatusCode: http.StatusInternalServerError,
+		Code:       types.ErrCodeInternal,
 		Message:    "An unexpected error occurred",
 		Details:    err.Error(),
 	})
+}
+
+func recoveryMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("Panic recovered: %v", err)
+				c.JSON(http.StatusInternalServerError, types.APIError{
+					StatusCode: http.StatusInternalServerError,
+					Code:       types.ErrCodeInternal,
+					Message:    "An unexpected error occurred. Please try again later.",
+				})
+				c.Abort()
+			}
+		}()
+		c.Next()
+	}
 }
 
 func main() {
@@ -49,8 +67,9 @@ func main() {
 	service := services.NewService(supabaseClient)
 
 	r := gin.Default()
+	r.Use(recoveryMiddleware())
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000" , "http://localhost:8080"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,

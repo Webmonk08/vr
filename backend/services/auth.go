@@ -49,7 +49,7 @@ func doAuthRequest(method, endpoint string, body interface{}, authHeader string)
 	if resp.StatusCode >= 400 {
 		var errRes map[string]interface{}
 		json.Unmarshal(respData, &errRes)
-		msg := "Auth error"
+		msg := "Authentication failed"
 		if m, ok := errRes["msg"].(string); ok {
 			msg = m
 		} else if m, ok := errRes["error_description"].(string); ok {
@@ -57,8 +57,19 @@ func doAuthRequest(method, endpoint string, body interface{}, authHeader string)
 		} else if m, ok := errRes["message"].(string); ok {
 			msg = m
 		}
+
+		code := types.ErrCodeUnauthorized
+		if resp.StatusCode == 400 {
+			code = types.ErrCodeBadRequest
+		} else if resp.StatusCode == 422 {
+			code = types.ErrCodeValidation
+		} else if resp.StatusCode == 429 {
+			code = types.ErrCodeServiceUnavailable
+		}
+
 		return nil, &types.APIError{
 			StatusCode: resp.StatusCode,
+			Code:       code,
 			Message:    msg,
 			Details:    string(respData),
 		}
@@ -67,7 +78,6 @@ func doAuthRequest(method, endpoint string, body interface{}, authHeader string)
 	return respData, nil
 }
 
-// Helper for making Supabase Admin API calls (for password updates)
 func doAuthAdminRequest(method, endpoint string, body interface{}) ([]byte, error) {
 	apiURL := os.Getenv("SUPABASE_API_URL")
 	apiKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -105,14 +115,23 @@ func doAuthAdminRequest(method, endpoint string, body interface{}) ([]byte, erro
 	if resp.StatusCode >= 400 {
 		var errRes map[string]interface{}
 		json.Unmarshal(respData, &errRes)
-		msg := "Auth admin error"
+		msg := "Admin operation failed"
 		if m, ok := errRes["msg"].(string); ok {
 			msg = m
 		} else if m, ok := errRes["message"].(string); ok {
 			msg = m
 		}
+
+		code := types.ErrCodeInternal
+		if resp.StatusCode == 400 {
+			code = types.ErrCodeBadRequest
+		} else if resp.StatusCode == 403 {
+			code = types.ErrCodeForbidden
+		}
+
 		return nil, &types.APIError{
 			StatusCode: resp.StatusCode,
+			Code:       code,
 			Message:    msg,
 			Details:    string(respData),
 		}
