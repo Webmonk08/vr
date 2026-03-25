@@ -1,6 +1,5 @@
 import { Product } from "@/types/product";
 import { apiClient, ApiException } from "@/lib/api-client";
-import { toast } from "@/store/useToastStore";
 
 export class ProductService {
 
@@ -9,11 +8,6 @@ export class ProductService {
       const data = await apiClient.get<Product[]>('/api/products/getAll');
       return data;
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to fetch products');
-      }
       throw error;
     }
   }
@@ -28,14 +22,8 @@ export class ProductService {
         }))
       };
       const data = await apiClient.post<Product>('/api/products/create', payload);
-      toast.success('Product created successfully');
       return data;
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to create product');
-      }
       throw error;
     }
   }
@@ -53,14 +41,8 @@ export class ProductService {
         }
       };
       const data = await apiClient.post<Product>(`/api/products/update/${id}`, payload);
-      toast.success('Product updated successfully');
       return data;
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to update product');
-      }
       throw error;
     }
   }
@@ -68,13 +50,7 @@ export class ProductService {
   static async deleteProduct(id: number): Promise<void> {
     try {
       await apiClient.delete(`/api/products/delete/${id}`);
-      toast.success('Product deleted successfully');
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to delete product');
-      }
       throw error;
     }
   }

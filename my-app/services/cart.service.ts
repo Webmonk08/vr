@@ -1,6 +1,5 @@
 import { CartItem } from "@/types/cart.types";
 import { apiClient, ApiException } from "@/lib/api-client";
-import { toast } from "@/store/useToastStore";
 
 export class CartService {
   static async getCart(userId: string | undefined): Promise<CartItem[]> {
@@ -9,11 +8,6 @@ export class CartService {
       const data = await apiClient.get<CartItem[]>(url);
       return data;
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to fetch cart');
-      }
       throw error;
     }
   }
@@ -25,14 +19,8 @@ export class CartService {
         variant_id: variantId,
         user_id: userId,
       });
-      toast.success('Item added to cart');
       return data;
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to add item to cart');
-      }
       throw error;
     }
   }
@@ -45,17 +33,7 @@ export class CartService {
         quantity: quantity,
         user_id: userId,
       });
-      if (quantity <= 0) {
-        toast.success('Item removed from cart');
-      } else {
-        toast.success('Cart updated');
-      }
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to update cart');
-      }
       throw error;
     }
   }
@@ -66,13 +44,7 @@ export class CartService {
         cart_id: cartId,
         product_id: productId,
       });
-      toast.success('Item removed from cart');
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to remove item from cart');
-      }
       throw error;
     }
   }
@@ -80,13 +52,7 @@ export class CartService {
   static async clearCart(userId: string): Promise<void> {
     try {
       await apiClient.post('/api/cart/clear', { user_id: userId });
-      toast.success('Cart cleared');
     } catch (error) {
-      if (error instanceof ApiException) {
-        toast.error(error.getUserMessage());
-      } else {
-        toast.error('Failed to clear cart');
-      }
       throw error;
     }
   }

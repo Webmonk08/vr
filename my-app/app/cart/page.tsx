@@ -45,7 +45,22 @@ function CartPage({ onNavigate }: CartPageProps) {
       productVariantId: number;
       quantity: number;
     }) => CartService.updateItem(itemId, productVariantId, quantity, user!.id),
-    onSuccess: () => {
+    onMutate: async ({ itemId, quantity }) => {
+      await queryClient.cancelQueries({ queryKey: ["cart", user?.id] });
+      const previousCart = queryClient.getQueryData<CartItem[]>(["cart", user?.id]);
+      if (previousCart) {
+        queryClient.setQueryData<CartItem[]>(["cart", user?.id], previousCart.map(item => 
+          item.id === itemId ? { ...item, quantity } : item
+        ));
+      }
+      return { previousCart };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(["cart", user?.id], context.previousCart);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart", user?.id] });
     },
   });
@@ -54,7 +69,20 @@ function CartPage({ onNavigate }: CartPageProps) {
   const { mutate: removeItem } = useMutation({
     mutationFn: ({ cartId, productId }: { cartId: number; productId: number }) =>
       CartService.removeItem(cartId, productId),
-    onSuccess: () => {
+    onMutate: async ({ cartId }) => {
+      await queryClient.cancelQueries({ queryKey: ["cart", user?.id] });
+      const previousCart = queryClient.getQueryData<CartItem[]>(["cart", user?.id]);
+      if (previousCart) {
+        queryClient.setQueryData<CartItem[]>(["cart", user?.id], previousCart.filter(item => item.id !== cartId));
+      }
+      return { previousCart };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(["cart", user?.id], context.previousCart);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart", user?.id] });
     },
   });
@@ -62,7 +90,18 @@ function CartPage({ onNavigate }: CartPageProps) {
   // Clear cart mutation
   const { mutate: clearCart } = useMutation({
     mutationFn: () => CartService.clearCart(user!.id),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["cart", user?.id] });
+      const previousCart = queryClient.getQueryData<CartItem[]>(["cart", user?.id]);
+      queryClient.setQueryData<CartItem[]>(["cart", user?.id], []);
+      return { previousCart };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(["cart", user?.id], context.previousCart);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart", user?.id] });
     },
   });
@@ -311,4 +350,4 @@ function CartPage({ onNavigate }: CartPageProps) {
   );
 }
 
-export default withAuth(CartPage, ['admin', 'manager', 'customer']);
+export default withAuth(CartPage, ['ADMIN', 'MANAGER', 'CUSTOMER' , 'OWNER']);

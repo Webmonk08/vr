@@ -7,6 +7,7 @@ export interface dataProfile {
   name?: string;
   address?: string;
   phone?: string;
+  phone_no?: string;
 }
 
 export const getUserProfile = async (userid: string): Promise<dataProfile | null> => {
@@ -19,7 +20,7 @@ export const getUserProfile = async (userid: string): Promise<dataProfile | null
       email: data?.email || '',
       name: data?.name || '',
       address: data?.address || '',
-      phone: data?.phone || '',
+      phone: data?.phone_no || data?.phone || '',
     };
   } catch (error) {
     if (error instanceof ApiException) {

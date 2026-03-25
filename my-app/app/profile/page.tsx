@@ -47,7 +47,6 @@ export default function ProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       setIsEditingDetails(false);
-      alert('Details updated successfully!');
     },
     onError: (error) => {
       alert('Failed to update details: ' + error.message);

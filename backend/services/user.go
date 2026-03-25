@@ -11,6 +11,7 @@ func (s *Service) GetProfile(userID string) (*types.User, error) {
 	var users []types.User
 	_, err := s.client.From("users").Select("*", "exact", false).Eq("id", userID).ExecuteTo(&users)
 	if err != nil {
+		fmt.Println(err)
 		return nil, types.InternalServerError("Failed to fetch user profile")
 	}
 	if len(users) == 0 {
