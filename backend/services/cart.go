@@ -56,7 +56,7 @@ func (s *Service) GetCart(userID string) ([]types.CartItem, error) {
 			Stock:            v.StockQuantity,
 			ShortDescription: v.Description,
 			Description:      v.LongDescription,
-			SKU:              v.SKU,
+			StorageUnitID:    v.StorageUnitID,
 			Image:            v.Image,
 			Isdefault:        v.Isdefault,
 		}

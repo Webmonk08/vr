@@ -4,7 +4,7 @@ import { Package, Plus, Edit, ArrowLeft, Box, Trash2 } from 'lucide-react';
 import { ProductForm } from '@/component/ProductForm';
 import { ConfirmationModal } from '@/component/ConfirmationModal';
 import withAuth from '@/component/withAuth';
-import { Product } from '@/types/product';
+import { Product, StorageUnit } from '@/types/product';
 import { ProductService } from '@/services/products.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LoadingPage from '@/component/loadingPage';
@@ -27,6 +27,12 @@ function ADMINPage() {
     queryFn: ProductService.getAll,
   });
   const products = data || [];
+
+  const { data: storageUnitsData } = useQuery({
+    queryKey: ['storageUnits'],
+    queryFn: ProductService.getStorageUnits,
+  });
+  const storageUnits = storageUnitsData || [];
 
 
   const createProductMutation = useMutation({
@@ -224,11 +230,13 @@ function ADMINPage() {
                               </div>
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Stock:</span>
-                                <span className="text-gray-900">{variants[0].stock} {variants[0].sku}</span>
+                                <span className="text-gray-900">{variants[0].stock}</span>
                               </div>
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">SKU:</span>
-                                <span className="text-gray-900 font-mono text-xs">{variants[0].sku}</span>
+                                <span className="text-gray-600">Storage Unit:</span>
+                                <span className="text-gray-900 font-mono text-xs">
+                                  {storageUnits.find(s => s.id === variants[0].storageUnitId)?.name || 'N/A'}
+                                </span>
                               </div>
                             </div>
                           )}
@@ -268,6 +276,7 @@ function ADMINPage() {
       {showConfirmModal && pendingFormData && (
         <ConfirmationModal
           formData={pendingFormData}
+          storageUnits={storageUnits}
           onConfirm={handleConfirmSubmit}
           onCancel={() => {
             setShowConfirmModal(false);

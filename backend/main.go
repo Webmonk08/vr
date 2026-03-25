@@ -77,6 +77,15 @@ func main() {
 
 	// --- Products Endpoints ---
 
+	r.GET("/api/storage-units/getAll", func(c *gin.Context) {
+		storageUnits, err := service.GetStorageUnits()
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, storageUnits)
+	})
+
 	r.GET("/api/products/getAll", func(c *gin.Context) {
 		products, err := service.GetProducts()
 		if err != nil {
@@ -88,10 +97,12 @@ func main() {
 
 	r.POST("/api/products/create", func(c *gin.Context) {
 		var product types.Product
+		fmt.Println("product", c.Request.Body)
 		if err := c.ShouldBindJSON(&product); err != nil {
 			handleError(c, types.BadRequest(err.Error()))
 			return
 		}
+		fmt.Println("product", product)
 		created, err := service.CreateProduct(product)
 		if err != nil {
 			handleError(c, err)

@@ -10,17 +10,22 @@ type DBProduct struct {
 }
 
 type DBProductVariant struct {
-	ID              int      `json:"id"`
-	ProductID       int      `json:"product_id"`
-	Price           float64  `json:"price"`
-	StockQuantity   int      `json:"stock_quantity"`
-	WeightValue     float64  `json:"weight_value"`
-	WeightUnit      string   `json:"weight_unit"`
-	SKU             string   `json:"sku"`
-	Description     string   `json:"description"`
-	LongDescription string   `json:"long_description"`
-	Image           []string `json:"image"`
-	Isdefault       bool     `json:"isdefault"`
+	ID              int          `json:"id"`
+	ProductID       int          `json:"product_id"`
+	Price           float64      `json:"price"`
+	StockQuantity   int          `json:"stock_quantity"`
+	WeightValue     float64      `json:"weight_value"`
+	WeightUnit      string       `json:"weight_unit"`
+	StorageUnitID   *string         `json:"storage_unit_id"`
+	Description     string       `json:"description"`
+	LongDescription string       `json:"long_description"`
+	Image           []string     `json:"image"`
+	Isdefault       bool         `json:"isdefault"`
+}
+
+type StorageUnit struct {
+	ID   string    `json:"id"`
+	Name string `json:"name"`
 }
 
 type DBCartItem struct {
@@ -45,7 +50,7 @@ type ProductVariant struct {
 	Stock            int      `json:"stock"`
 	ShortDescription string   `json:"shortDescription"`
 	Description      string   `json:"description"`
-	SKU              string   `json:"sku"`
+	StorageUnitID    *string     `json:"storageUnitId"`
 	Image            []string `json:"image"`
 	Isdefault        bool     `json:"isdefault"`
 }

@@ -1,4 +1,4 @@
-import { Product } from "@/types/product";
+import { Product, StorageUnit } from "@/types/product";
 import { apiClient, ApiException } from "@/lib/api-client";
 
 export class ProductService {
@@ -6,6 +6,15 @@ export class ProductService {
   static async getAll(): Promise<Product[]> {
     try {
       const data = await apiClient.get<Product[]>('/api/products/getAll');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getStorageUnits(): Promise<StorageUnit[]> {
+    try {
+      const data = await apiClient.get<StorageUnit[]>('/api/storage-units/getAll');
       return data;
     } catch (error) {
       throw error;

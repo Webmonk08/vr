@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Package, Tag, FileText, Image as ImageIcon, Box, DollarSign, Hash, Scale, Barcode } from 'lucide-react';
-import { Product, ProductVariant } from '@/types/product';
+import { Product, ProductVariant, StorageUnit } from '@/types/product';
+import { ProductService } from '@/services/products.service';
 
 interface ProductFormProps {
   product?: Product;
@@ -16,7 +17,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         shortDescription: '',
         description: '',
         image: '',
-        sku: '',
+        storageUnitId: null,
         stock: 0,
         price: 0,
         isdefault: false
@@ -29,11 +30,25 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     }));
   };
 
+  const [storageUnits, setStorageUnits] = useState<StorageUnit[]>([]);
   const [formData, setFormData] = useState<Product>({
     id: product?.id || 0,
     name: product?.name || '',
     variants: formatVariants(product?.variants)
   });
+
+  useEffect(() => {
+    const fetchStorageUnits = async () => {
+      try {
+        const units = await ProductService.getStorageUnits();
+        setStorageUnits(units);
+        console.log("units", units)
+      } catch (error) {
+        console.error('Failed to fetch storage units:', error);
+      }
+    };
+    fetchStorageUnits();
+  }, []);
 
   useEffect(() => {
     if (product) {
@@ -53,9 +68,13 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   };
 
   const handleVariantChange = (index: number, field: keyof ProductVariant, value: any) => {
-    const updatedVariants = [...formData.variants];
-    updatedVariants[index] = { ...updatedVariants[index], [field]: value };
-    setFormData({ ...formData, variants: updatedVariants });
+    console.log("field", field)
+    console.log("value", value)
+    const updatedVariants = formData.variants.map((v, i) => 
+      i === index ? { ...v, [field]: value } : v
+    );
+    setFormData(prev => ({ ...prev, variants: updatedVariants }));
+    console.log(formData['variants'])
   };
 
   const addVariant = () => {
@@ -69,7 +88,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           shortDescription: '',
           description: '',
           image: '',
-          sku: '',
+          storageUnitId: storageUnits.length > 0 ? storageUnits[0].id : null,
           stock: 0,
           price: 0,
           isdefault: false
@@ -96,7 +115,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     for (let i = 0; i < formData.variants.length; i++) {
       const variant = formData.variants[i];
-      if (!variant.shortDescription || !variant.description || !variant.image || !variant.sku || variant.stock <= 0 || variant.price <= 0) {
+      if (!variant.shortDescription || !variant.description || !variant.image || variant.stock <= 0 || variant.price <= 0) {
         alert(`Please complete all fields for variant ${i + 1}`);
         return;
       }
@@ -324,22 +343,27 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                       Stock Information <span className="text-red-500">*</span>
                     </label>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      {/* SKU */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Storage Unit */}
                       <div>
                         <label className="block text-xs text-gray-600 mb-2">
-                          SKU Code
+                          Storage Unit
                         </label>
                         <div className="relative">
                           <Barcode className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="text"
-                            value={variant.sku}
-                            onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
-                            placeholder="SKU-001"
-                            className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none text-sm"
+                          <select
+                            value={variant.storageUnitId ?? ''} // If null/undefined, it defaults to ''
+                            onChange={(e) => handleVariantChange(index, 'storageUnitId', e.target.value ? e.target.value : null)}
+                            className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none text-sm appearance-none bg-white"
                             required
-                          />
+                          >
+                            {/* The Initial Placeholder Option */}
+                            <option value="" disabled>Select Storage Unit</option>
+
+                            {storageUnits.map(unit => (
+                              <option key={unit.id} value={unit.id}>{unit.name}</option>
+                            ))}
+                          </select>
                         </div>
                       </div>
 
@@ -393,7 +417,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     shortDescription: '',
                     description: '',
                     image: '',
-                    sku: '',
+                    storageUnitId: storageUnits.length > 0 ? storageUnits[0].id : null,
                     stock: 0,
                     price: 0,
                     isdefault: false

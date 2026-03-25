@@ -21,7 +21,7 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 	var dbProducts []types.DBProduct
 
 	_, err := s.client.From("products").
-		Select("*, product_variants(*)", "exact", false).
+		Select("*, product_variants(*, storage_units(*))", "exact", false).
 		ExecuteTo(&dbProducts)
 	if err != nil {
 		return nil, types.InternalServerError("Failed to fetch products")
@@ -38,7 +38,7 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 				Stock:            v.StockQuantity,
 				ShortDescription: v.Description,
 				Description:      v.LongDescription,
-				SKU:              v.SKU,
+				StorageUnitID:    v.StorageUnitID,
 				Image:            v.Image,
 				Isdefault:        v.Isdefault,
 			})
@@ -52,15 +52,31 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 	return products, nil
 }
 
+func (s *Service) GetStorageUnits() ([]types.StorageUnit, error) {
+	var storageUnits []types.StorageUnit
+
+	_, err := s.client.From("storage_units").
+		Select("*", "exact", false).
+		ExecuteTo(&storageUnits)
+	if err != nil {
+		fmt.Println(err)
+		return nil, types.InternalServerError("Failed to fetch storage units")
+	}
+
+	return storageUnits, nil
+}
+
 func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 	var newProduct []struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	}
+	fmt.Println("product", product)
 	_, err := s.client.From("products").Insert(map[string]interface{}{
 		"name": product.Name,
 	}, false, "", "", "").ExecuteTo(&newProduct)
 	if err != nil {
+		fmt.Println(err)
 		return nil, types.InternalServerError("Failed to insert product")
 	}
 	if len(newProduct) == 0 {
@@ -78,20 +94,24 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 			unit = "kg"
 		}
 
-		var newVariant []types.DBProductVariant
-		_, err := s.client.From("product_variants").Insert(map[string]interface{}{
+		variantData := map[string]interface{}{
 			"product_id":       createdProductID,
 			"price":            v.Price,
 			"weight_value":     val,
 			"weight_unit":      unit,
 			"stock_quantity":   v.Stock,
-			"sku":              v.SKU,
 			"description":      v.ShortDescription,
+			"sku":              v.StorageUnitID,
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
-		}, false, "", "", "").ExecuteTo(&newVariant)
+		}
+
+
+		var newVariant []types.DBProductVariant
+		_, err := s.client.From("product_variants").Insert(variantData, false, "", "", "").ExecuteTo(&newVariant)
 		if err != nil {
+			fmt.Println(err)
 			return nil, types.InternalServerError("Failed to insert variant")
 		}
 		if len(newVariant) > 0 {
@@ -103,7 +123,7 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 				Stock:            dbV.StockQuantity,
 				ShortDescription: dbV.Description,
 				Description:      dbV.LongDescription,
-				SKU:              dbV.SKU,
+				StorageUnitID:    dbV.StorageUnitID,
 				Image:            dbV.Image,
 				Isdefault:        dbV.Isdefault,
 			})
@@ -157,22 +177,27 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 			"weight_value":     val,
 			"weight_unit":      unit,
 			"stock_quantity":   v.Stock,
-			"sku":              v.SKU,
 			"description":      v.ShortDescription,
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
 		}
 
+		if v.StorageUnitID != nil {
+			updates["sku"] = *v.StorageUnitID
+		}
+
 		if v.ID != 0 {
 			_, _, err := s.client.From("product_variants").Update(updates, "", "").Eq("id", fmt.Sprintf("%d", v.ID)).Execute()
 			if err != nil {
+				fmt.Println(err)
 				return nil, types.InternalServerError("Failed to update product variant")
 			}
 		} else {
 			updates["product_id"] = id
 			_, _, err := s.client.From("product_variants").Insert(updates, false, "", "", "").Execute()
 			if err != nil {
+				fmt.Println(err)
 				return nil, types.InternalServerError("Failed to insert new product variant")
 			}
 		}
@@ -203,4 +228,3 @@ func (s *Service) DeleteProduct(id int) error {
 
 	return nil
 }
-

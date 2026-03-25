@@ -1,13 +1,14 @@
 
-import { X, CheckCircle, Package, Tag, Scale, DollarSign, Box } from 'lucide-react';
-import { Product } from '@/types/product';
+import { X, CheckCircle, Package, Tag, Scale, DollarSign, Box, Barcode } from 'lucide-react';
+import { Product, StorageUnit } from '@/types/product';
 interface ConfirmationModalProps {
   formData: Product;
+  storageUnits: StorageUnit[];
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function ConfirmationModal({ formData, onConfirm, onCancel }: ConfirmationModalProps) {
+export function ConfirmationModal({ formData, storageUnits, onConfirm, onCancel }: ConfirmationModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
@@ -100,7 +101,16 @@ export function ConfirmationModal({ formData, onConfirm, onCancel }: Confirmatio
                       <p className="text-sm text-gray-600 mb-1">Stock</p>
                       <p className="text-2xl text-gray-900 flex items-center gap-2">
                         <Box className="w-5 h-5 text-green-700" />
-                        {variant.stock} {variant.sku}
+                        {variant.stock}
+                      </p>
+                    </div>
+
+                    {/* Storage Unit */}
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Storage Unit</p>
+                      <p className="text-2xl text-gray-900 flex items-center gap-2">
+                        <Barcode className="w-5 h-5 text-green-700" />
+                        {storageUnits.find(s => s.id === variant.storageUnitId)?.name || 'N/A'}
                       </p>
                     </div>
 

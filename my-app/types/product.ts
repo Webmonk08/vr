@@ -1,3 +1,8 @@
+export interface StorageUnit {
+  id: number;
+  name: string;
+}
+
 export interface ProductVariant {
   id: number;
   price: number;
@@ -5,7 +10,7 @@ export interface ProductVariant {
   stock: number;
   shortDescription: string;
   description: string;
-  sku: string;
+  storageUnitId: number | null;
   image: string;
   isdefault: boolean
 }
