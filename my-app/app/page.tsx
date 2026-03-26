@@ -2,11 +2,19 @@
 import { useAuthStore } from '@/store/useAuthStore';
 import { Wheat, ShieldCheck, Truck, Clock, Award, Star, MapPin, Users, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function App() {
   const [activeSlide, setActiveSlide] = useState(0);
   const { user, role } = useAuthStore()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (user && role && role.toLowerCase() !== 'customer') {
+      router.push('/order')
+    }
+  }, [user, role, router])
 
   console.log("Role", role)
   // Home Page

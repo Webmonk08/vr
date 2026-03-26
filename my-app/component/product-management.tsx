@@ -4,7 +4,7 @@ import { Package, Plus, Edit, ArrowLeft, Box, Trash2 } from 'lucide-react';
 import { ProductForm } from '@/component/ProductForm';
 import { ConfirmationModal } from '@/component/ConfirmationModal';
 import withAuth from '@/component/withAuth';
-import { Product, StorageUnit } from '@/types/product';
+import { Product } from '@/types/product';
 import { ProductService } from '@/services/products.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LoadingPage from '@/component/loadingPage';
@@ -15,7 +15,7 @@ interface FormData extends Product {
 }
 
 
-function ADMINPage() {
+const ProductManagement = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'manage'>('add');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
@@ -289,4 +289,4 @@ function ADMINPage() {
 }
 
 
-export default withAuth(ADMINPage, ['ADMIN', 'OWNER']);
+export default withAuth(ProductManagement, ['ADMIN', 'OWNER', 'MANAGER']);

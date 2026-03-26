@@ -1,6 +1,10 @@
 'use client'
-import { Wheat, ShoppingBag, User, Package, Search, Filter, Calendar, Truck, Clock, CheckCircle, XCircle, Eye, Download, Warehouse, Plus, ArrowRight, Edit2, X, Box, TrendingUp } from 'lucide-react';
+import {ShoppingBag, User, Package, Search, Truck, Clock, CheckCircle, XCircle, Eye, Download, Warehouse, Plus, ArrowRight, Edit2, X, Box, TrendingUp, User2, ShoppingBagIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useAuthStore } from '@/store/useAuthStore';
+import UserManagementPage from '@/component/user-management'
+import ProductManagement from '@/component/product-management';
+import withAuth from '@/component/withAuth';
 
 interface OrderManagementPageProps {
   onNavigate: (page: string) => void;
@@ -43,10 +47,10 @@ interface StorageUnit {
   }[];
 }
 
-export default function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
-  const [activeSection, setActiveSection] = useState<'orders' | 'storage'>('orders');
+function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
+  const [activeSection, setActiveSection] = useState<'orders' | 'storage' | 'users'|'product'>('orders');
   const [orderTab, setOrderTab] = useState<'pending' | 'history'>('pending');
-  
+  const {role} = useAuthStore()
   // Orders State
   const [orders, setOrders] = useState<Order[]>([
     {
@@ -291,15 +295,15 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
   const historyOrders = orders.filter(o => o.status === 'Shipped' || o.status === 'Delivered' || o.status === 'Cancelled');
 
   const filteredOrders = (orderTab === 'pending' ? pendingOrders : historyOrders).filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesCustomer = filterCustomer === 'all' || order.customer.name === filterCustomer;
     const matchesProduct = filterProduct === 'all' || order.products.some(p => p.name === filterProduct);
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
-    
+
     return matchesSearch && matchesCustomer && matchesProduct && matchesStatus;
   });
 
@@ -308,7 +312,7 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
 
   return (
     <div className="min-h-screen bg-gray-50">
-    
+
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -322,25 +326,43 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
         <div className="flex gap-4 mb-8">
           <button
             onClick={() => setActiveSection('orders')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${
-              activeSection === 'orders'
-                ? 'bg-green-700 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'orders'
+              ? 'bg-green-700 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
           >
             <ShoppingBag className="w-5 h-5" />
             Orders Management
           </button>
           <button
             onClick={() => setActiveSection('storage')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${
-              activeSection === 'storage'
-                ? 'bg-green-700 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'storage'
+              ? 'bg-green-700 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
           >
             <Warehouse className="w-5 h-5" />
             Storage Management
+          </button>
+          {role === "OWNER" && (<button
+            onClick={() => setActiveSection('users')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'users'
+              ? 'bg-green-700 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+          >
+            <User2 className="w-5 h-5" />
+            User-Management
+          </button>)}
+          <button
+            onClick={() => setActiveSection('product')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'product'
+              ? 'bg-green-700 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+          >
+            <ShoppingBagIcon className="w-5 h-5" />
+            Product-Management
           </button>
         </div>
 
@@ -402,21 +424,19 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
             <div className="flex gap-4 mb-6">
               <button
                 onClick={() => setOrderTab('pending')}
-                className={`px-6 py-3 rounded-full transition ${
-                  orderTab === 'pending'
-                    ? 'bg-green-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`px-6 py-3 rounded-full transition ${orderTab === 'pending'
+                  ? 'bg-green-700 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 Pending Orders ({pendingOrders.length})
               </button>
               <button
                 onClick={() => setOrderTab('history')}
-                className={`px-6 py-3 rounded-full transition ${
-                  orderTab === 'history'
-                    ? 'bg-green-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`px-6 py-3 rounded-full transition ${orderTab === 'history'
+                  ? 'bg-green-700 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 Order History ({historyOrders.length})
               </button>
@@ -632,7 +652,7 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Total Stock</p>
                     <h3 className="text-3xl text-gray-900">
-                      {storageUnits.reduce((sum, unit) => 
+                      {storageUnits.reduce((sum, unit) =>
                         sum + unit.products.reduce((pSum, p) => pSum + p.quantity, 0), 0
                       )}
                     </h3>
@@ -655,7 +675,7 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
               </button>
               <button
                 onClick={() => setShowTransfer(true)}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-full transition flex items-center gap-2"
+                className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full transition flex items-center gap-2"
               >
                 <ArrowRight className="w-5 h-5" />
                 Transfer Products
@@ -720,6 +740,14 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
               ))}
             </div>
           </div>
+        )}
+        {(activeSection == 'users' && role === 'OWNER') && (
+          <UserManagementPage />
+        )}
+        {activeSection == 'product' && (
+
+          <ProductManagement/>
+
         )}
       </div>
 
@@ -881,7 +909,8 @@ export default function OrderManagementPage({ onNavigate }: OrderManagementPageP
         </div>
       )}
 
-    
+
     </div>
   );
 }
+export default withAuth(OrderManagementPage , ['ADMIN' , 'OWNER' , 'MANAGER'])

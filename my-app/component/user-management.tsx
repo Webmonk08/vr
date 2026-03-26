@@ -5,11 +5,7 @@ import { UserManagementService, UserManagementData, CreateUserPayload, UpdateUse
 import { ShoppingBag, User, Search, Plus, Edit2, Trash2, Shield, Users, X, Phone, Loader2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
-interface UserManagementPageProps {
-  onNavigate: (page: string) => void;
-}
-
-const UserManagementPage = ({ onNavigate }: UserManagementPageProps) => {
+const UserManagementPage = () => {
   const [users, setUsers] = useState<UserManagementData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
