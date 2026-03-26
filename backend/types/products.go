@@ -120,3 +120,15 @@ type User struct {
 	Role     string `json:"role"`
 	Email    string `json:"email"`
 }
+
+type SKUProduct struct {
+	ProductName   string      `json:"product_name"`
+	VariantID     int         `json:"variant_id"`
+	Price         float64     `json:"price"`
+	StockQuantity int         `json:"stock_quantity"`
+	WeightValue   float64     `json:"weight_value"`
+	WeightUnit    string      `json:"weight_unit"`
+	Description   string      `json:"description"`
+	Image         interface{} `json:"image"`
+	IsDefault     bool        `json:"is_default"`
+}

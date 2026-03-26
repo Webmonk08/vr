@@ -1,6 +1,18 @@
 export interface StorageUnit {
-  id: number;
+  id: string | number;
   name: string;
+}
+
+export interface SKUProduct {
+  product_name: string;
+  variant_id: number;
+  price: number;
+  stock_quantity: number;
+  weight_value: number;
+  weight_unit: string;
+  description: string;
+  image: string[] | string | null;
+  is_default: boolean;
 }
 
 export interface ProductVariant {
@@ -10,7 +22,7 @@ export interface ProductVariant {
   stock: number;
   shortDescription: string;
   description: string;
-  storageUnitId: number | null;
+  storageUnitId: string | number | null;
   image: string;
   isdefault: boolean
 }

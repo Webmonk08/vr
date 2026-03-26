@@ -86,6 +86,16 @@ func main() {
 		c.JSON(http.StatusOK, storageUnits)
 	})
 
+	r.GET("/api/storage-units/:sku/products", func(c *gin.Context) {
+		sku := c.Param("sku")
+		products, err := service.GetProductsBySKU(sku)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, products)
+	})
+
 	r.GET("/api/products/getAll", func(c *gin.Context) {
 		products, err := service.GetProducts()
 		if err != nil {

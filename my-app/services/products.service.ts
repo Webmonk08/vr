@@ -1,4 +1,4 @@
-import { Product, StorageUnit } from "@/types/product";
+import { Product, StorageUnit, SKUProduct } from "@/types/product";
 import { apiClient, ApiException } from "@/lib/api-client";
 
 export class ProductService {
@@ -15,6 +15,15 @@ export class ProductService {
   static async getStorageUnits(): Promise<StorageUnit[]> {
     try {
       const data = await apiClient.get<StorageUnit[]>('/api/storage-units/getAll');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getProductsBySKU(sku: string | number): Promise<SKUProduct[]> {
+    try {
+      const data = await apiClient.get<SKUProduct[]>(`/api/storage-units/${sku}/products`);
       return data;
     } catch (error) {
       throw error;

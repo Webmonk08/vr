@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"vr/types"
 
@@ -67,25 +68,8 @@ func (s *Service) GetStorageUnits() ([]types.StorageUnit, error) {
 }
 
 func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
-	var newProduct []struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	}
-	fmt.Println("product", product)
-	_, err := s.client.From("products").Insert(map[string]interface{}{
-		"name": product.Name,
-	}, false, "", "", "").ExecuteTo(&newProduct)
-	if err != nil {
-		fmt.Println(err)
-		return nil, types.InternalServerError("Failed to insert product")
-	}
-	if len(newProduct) == 0 {
-		return nil, types.InternalServerError("No product returned after insert")
-	}
-
-	createdProductID := newProduct[0].ID
-	var createdVariants []types.ProductVariant
-
+	// Build variants payload
+	var variantsPayload []map[string]interface{}
 	for _, v := range product.Variants {
 		var val float64
 		var unit string
@@ -93,77 +77,51 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 		if unit == "" {
 			unit = "kg"
 		}
+		
+		var sku *string
+		if v.StorageUnitID != nil && *v.StorageUnitID != "" {
+			sku = v.StorageUnitID
+		}
 
-		variantData := map[string]interface{}{
-			"product_id":       createdProductID,
+		variantsPayload = append(variantsPayload, map[string]interface{}{
 			"price":            v.Price,
 			"weight_value":     val,
 			"weight_unit":      unit,
 			"stock_quantity":   v.Stock,
 			"description":      v.ShortDescription,
-			"sku":              v.StorageUnitID,
+			"sku":              sku,
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
-		}
-
-
-		var newVariant []types.DBProductVariant
-		_, err := s.client.From("product_variants").Insert(variantData, false, "", "", "").ExecuteTo(&newVariant)
-		if err != nil {
-			fmt.Println(err)
-			return nil, types.InternalServerError("Failed to insert variant")
-		}
-		if len(newVariant) > 0 {
-			dbV := newVariant[0]
-			createdVariants = append(createdVariants, types.ProductVariant{
-				ID:               dbV.ID,
-				Price:            dbV.Price,
-				Weight:           fmt.Sprintf("%g %s", dbV.WeightValue, dbV.WeightUnit),
-				Stock:            dbV.StockQuantity,
-				ShortDescription: dbV.Description,
-				Description:      dbV.LongDescription,
-				StorageUnitID:    dbV.StorageUnitID,
-				Image:            dbV.Image,
-				Isdefault:        dbV.Isdefault,
-			})
-		}
+		})
 	}
 
-	return &types.Product{
-		ID:       createdProductID,
-		Name:     newProduct[0].Name,
-		Variants: createdVariants,
-	}, nil
+	result := s.client.Rpc("create_product_with_variants", "", map[string]interface{}{
+		"p_name":     product.Name,
+		"p_variants": variantsPayload,
+	})
+	
+	var createdID int
+	if err := json.Unmarshal([]byte(result), &createdID); err != nil {
+		fmt.Println("Error RPC create_product_with_variants:", result)
+		return nil, types.InternalServerError("Failed to create product via RPC")
+	}
+
+	// Fetch newly created product to return full data
+	products, err := s.GetProducts()
+	if err == nil {
+		for _, p := range products {
+			if p.ID == createdID {
+				return &p, nil
+			}
+		}
+	}
+	product.ID = createdID
+	return &product, nil
 }
 
 func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, error) {
-	_, _, err := s.client.From("products").Update(map[string]interface{}{
-		"name": data.Name,
-	}, "", "").Eq("id", fmt.Sprintf("%d", id)).Execute()
-	if err != nil {
-		return nil, types.InternalServerError("Failed to update product name")
-	}
-
-	// Track incoming variant IDs to delete removed ones
-	incomingIDs := make(map[int]bool)
-	for _, v := range data.Variants {
-		if v.ID != 0 {
-			incomingIDs[v.ID] = true
-		}
-	}
-
-	var existingVariants []struct {
-		ID int `json:"id"`
-	}
-	s.client.From("product_variants").Select("id", "", false).Eq("product_id", fmt.Sprintf("%d", id)).ExecuteTo(&existingVariants)
-
-	for _, ev := range existingVariants {
-		if !incomingIDs[ev.ID] {
-			s.client.From("product_variants").Delete("", "").Eq("id", fmt.Sprintf("%d", ev.ID)).Execute()
-		}
-	}
-
+	var variantsPayload []map[string]interface{}
 	for _, v := range data.Variants {
 		var val float64
 		var unit string
@@ -172,35 +130,42 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 			unit = "kg"
 		}
 
-		updates := map[string]interface{}{
+		var sku *string
+		if v.StorageUnitID != nil && *v.StorageUnitID != "" {
+			sku = v.StorageUnitID
+		}
+
+		variantMap := map[string]interface{}{
 			"price":            v.Price,
 			"weight_value":     val,
 			"weight_unit":      unit,
 			"stock_quantity":   v.Stock,
 			"description":      v.ShortDescription,
+			"sku":              sku,
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
 		}
-
-		if v.StorageUnitID != nil {
-			updates["sku"] = *v.StorageUnitID
-		}
-
+		
 		if v.ID != 0 {
-			_, _, err := s.client.From("product_variants").Update(updates, "", "").Eq("id", fmt.Sprintf("%d", v.ID)).Execute()
-			if err != nil {
-				fmt.Println(err)
-				return nil, types.InternalServerError("Failed to update product variant")
-			}
-		} else {
-			updates["product_id"] = id
-			_, _, err := s.client.From("product_variants").Insert(updates, false, "", "", "").Execute()
-			if err != nil {
-				fmt.Println(err)
-				return nil, types.InternalServerError("Failed to insert new product variant")
-			}
+		    variantMap["id"] = v.ID
 		}
+
+		variantsPayload = append(variantsPayload, variantMap)
+	}
+
+	result := s.client.Rpc("update_product_with_variants", "", map[string]interface{}{
+		"p_product_id": id,
+		"p_name":       data.Name,
+		"p_variants":   variantsPayload,
+	})
+
+	if result != "null" && result != "" {
+	    var maybeErr map[string]interface{}
+	    if err := json.Unmarshal([]byte(result), &maybeErr); err == nil && maybeErr["code"] != nil {
+			fmt.Println("Error RPC update_product_with_variants:", result)
+			return nil, types.InternalServerError("Failed to update product via RPC")
+	    }
 	}
 
 	products, err := s.GetProducts()
@@ -227,4 +192,18 @@ func (s *Service) DeleteProduct(id int) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetProductsBySKU(sku string) ([]types.SKUProduct, error) {
+	var products []types.SKUProduct
+	result := s.client.Rpc("get_product_by_sku", "", map[string]interface{}{
+		"input_sku": sku,
+	})
+	
+	err := json.Unmarshal([]byte(result), &products)
+	if err != nil {
+		fmt.Println("Error parsing get_product_by_sku response:", err, "Response:", result)
+		return nil, types.InternalServerError("Failed to fetch products for sku")
+	}
+	return products, nil
 }
