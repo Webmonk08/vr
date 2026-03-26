@@ -96,6 +96,26 @@ func main() {
 		c.JSON(http.StatusOK, products)
 	})
 
+	r.POST("/api/storage-units/transfer", func(c *gin.Context) {
+		type TransferReq struct {
+			VariantID int    `json:"variant_id"`
+			FromSKU   string `json:"from_sku"`
+			ToSKU     string `json:"to_sku"`
+			Quantity  int    `json:"quantity"`
+		}
+		var req TransferReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		
+		if err := service.TransferProduct(req.VariantID, req.FromSKU, req.ToSKU, req.Quantity); err != nil {
+			handleError(c, err)
+			return
+		}
+		c.Status(http.StatusOK)
+	})
+
 	r.GET("/api/products/getAll", func(c *gin.Context) {
 		products, err := service.GetProducts()
 		if err != nil {

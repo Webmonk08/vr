@@ -30,6 +30,19 @@ export class ProductService {
     }
   }
 
+  static async transferProduct(data: {
+    variant_id: number;
+    from_sku: string;
+    to_sku: string;
+    quantity: number;
+  }): Promise<void> {
+    try {
+      await apiClient.post('/api/storage-units/transfer', data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async create(product: Product): Promise<Product> {
     try {
       const payload = {

@@ -68,12 +68,28 @@ export default function StorageManagement() {
     setShowAddStorage(false);
   };
 
-  const handleTransferProduct = (e: React.FormEvent) => {
+  const handleTransferProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Transfer logic here
-    alert('Product transferred successfully!');
-    setShowTransfer(false);
-    setTransferData({ fromStorage: '', toStorage: '', productId: '', quantity: 0 });
+    if (!transferData.productId || transferData.quantity <= 0) {
+      alert("Please select a product and valid quantity");
+      return;
+    }
+
+    try {
+      await ProductService.transferProduct({
+        variant_id: parseInt(transferData.productId),
+        from_sku: transferData.fromStorage,
+        to_sku: transferData.toStorage,
+        quantity: transferData.quantity
+      });
+      alert('Product transferred successfully!');
+      setShowTransfer(false);
+      setTransferData({ fromStorage: '', toStorage: '', productId: '', quantity: 0 });
+      fetchStorageData();
+    } catch (error) {
+        console.error(error);
+        alert('Failed to transfer product. Please check if you have sufficient stock.');
+    }
   };
 
   const getImageUrl = (image: string | string[] | null) => {

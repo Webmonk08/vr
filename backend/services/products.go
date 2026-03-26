@@ -22,7 +22,7 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 	var dbProducts []types.DBProduct
 
 	_, err := s.client.From("products").
-		Select("*, product_variants(*, storage_units(*))", "exact", false).
+		Select("*, product_variants(*, inventory(*))", "exact", false).
 		ExecuteTo(&dbProducts)
 	if err != nil {
 		return nil, types.InternalServerError("Failed to fetch products")
@@ -32,14 +32,24 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 	for _, p := range dbProducts {
 		var variants []types.ProductVariant
 		for _, v := range p.Variants {
+			var stock int
+			var storageUnitID *string
+			if len(v.Inventory) > 0 {
+				for _, inv := range v.Inventory {
+					stock += inv.Quantity
+				}
+				idStr := v.Inventory[0].StorageUnitID
+				storageUnitID = &idStr
+			}
+
 			variants = append(variants, types.ProductVariant{
 				ID:               v.ID,
 				Price:            v.Price,
 				Weight:           fmt.Sprintf("%g %s", v.WeightValue, v.WeightUnit),
-				Stock:            v.StockQuantity,
+				Stock:            stock,
 				ShortDescription: v.Description,
 				Description:      v.LongDescription,
-				StorageUnitID:    v.StorageUnitID,
+				StorageUnitID:    storageUnitID,
 				Image:            v.Image,
 				Isdefault:        v.Isdefault,
 			})
@@ -70,6 +80,8 @@ func (s *Service) GetStorageUnits() ([]types.StorageUnit, error) {
 func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 	// Build variants payload
 	var variantsPayload []map[string]interface{}
+	var storageUnitID string
+
 	for _, v := range product.Variants {
 		var val float64
 		var unit string
@@ -78,9 +90,10 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 			unit = "kg"
 		}
 		
-		var sku *string
 		if v.StorageUnitID != nil && *v.StorageUnitID != "" {
-			sku = v.StorageUnitID
+			if storageUnitID == "" {
+				storageUnitID = *v.StorageUnitID
+			}
 		}
 
 		variantsPayload = append(variantsPayload, map[string]interface{}{
@@ -89,7 +102,6 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 			"weight_unit":      unit,
 			"stock_quantity":   v.Stock,
 			"description":      v.ShortDescription,
-			"sku":              sku,
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
@@ -97,8 +109,9 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 	}
 
 	result := s.client.Rpc("create_product_with_variants", "", map[string]interface{}{
-		"p_name":     product.Name,
-		"p_variants": variantsPayload,
+		"p_name":               product.Name,
+		"p_variants":           variantsPayload,
+		"p_initial_storage_id": storageUnitID,
 	})
 	
 	var createdID int
@@ -122,6 +135,8 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 
 func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, error) {
 	var variantsPayload []map[string]interface{}
+	var storageUnitID string
+
 	for _, v := range data.Variants {
 		var val float64
 		var unit string
@@ -130,9 +145,10 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 			unit = "kg"
 		}
 
-		var sku *string
 		if v.StorageUnitID != nil && *v.StorageUnitID != "" {
-			sku = v.StorageUnitID
+			if storageUnitID == "" {
+				storageUnitID = *v.StorageUnitID
+			}
 		}
 
 		variantMap := map[string]interface{}{
@@ -141,7 +157,6 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 			"weight_unit":      unit,
 			"stock_quantity":   v.Stock,
 			"description":      v.ShortDescription,
-			"sku":              sku,
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
@@ -155,9 +170,10 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 	}
 
 	result := s.client.Rpc("update_product_with_variants", "", map[string]interface{}{
-		"p_product_id": id,
-		"p_name":       data.Name,
-		"p_variants":   variantsPayload,
+		"p_product_id":      id,
+		"p_name":            data.Name,
+		"p_variants":        variantsPayload,
+		"p_storage_unit_id": storageUnitID,
 	})
 
 	if result != "null" && result != "" {
@@ -194,16 +210,34 @@ func (s *Service) DeleteProduct(id int) error {
 	return nil
 }
 
+func (s *Service) TransferProduct(variantID int, fromSKU string, toSKU string, quantity int) error {
+	result := s.client.Rpc("transfer_product_stock", "", map[string]interface{}{
+		"p_variant_id":   variantID,
+		"p_from_unit_id": fromSKU,
+		"p_to_unit_id":   toSKU,
+		"p_transfer_qty": quantity,
+	})
+
+	if result != "null" && result != "" {
+		var maybeErr map[string]interface{}
+		if err := json.Unmarshal([]byte(result), &maybeErr); err == nil && maybeErr["code"] != nil {
+			fmt.Println("Error RPC transfer_product_stock:", result)
+			return types.InternalServerError("Failed to transfer product stock")
+		}
+	}
+	return nil
+}
+
 func (s *Service) GetProductsBySKU(sku string) ([]types.SKUProduct, error) {
 	var products []types.SKUProduct
-	result := s.client.Rpc("get_product_by_sku", "", map[string]interface{}{
-		"input_sku": sku,
+	result := s.client.Rpc("get_stocks_per_storage_unit", "", map[string]interface{}{
+		"p_storage_unit_id": sku,
 	})
 	
 	err := json.Unmarshal([]byte(result), &products)
 	if err != nil {
-		fmt.Println("Error parsing get_product_by_sku response:", err, "Response:", result)
-		return nil, types.InternalServerError("Failed to fetch products for sku")
+		fmt.Println("Error parsing get_stocks_per_storage_unit response:", err, "Response:", result)
+		return nil, types.InternalServerError("Failed to fetch products for storage unit")
 	}
 	return products, nil
 }

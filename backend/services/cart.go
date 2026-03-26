@@ -34,7 +34,7 @@ func (s *Service) GetCart(userID string) ([]types.CartItem, error) {
 	var response []NestedCartItem
 
 	_, err = s.client.From("cart_items").
-		Select("*, product_variants(*, products(*))", "exact", false).
+		Select("*, product_variants(*, products(*), inventory(*))", "exact", false).
 		Eq("cart_id", cartID).
 		ExecuteTo(&response)
 	if err != nil {
@@ -49,14 +49,25 @@ func (s *Service) GetCart(userID string) ([]types.CartItem, error) {
 		}
 
 		v := item.Variant.DBProductVariant
+		
+		var stock int
+		var storageUnitID *string
+		if len(v.Inventory) > 0 {
+			for _, inv := range v.Inventory {
+				stock += inv.Quantity
+			}
+			idStr := v.Inventory[0].StorageUnitID
+			storageUnitID = &idStr
+		}
+
 		variant := &types.ProductVariant{
 			ID:               v.ID,
 			Price:            v.Price,
 			Weight:           fmt.Sprintf("%g %s", v.WeightValue, v.WeightUnit),
-			Stock:            v.StockQuantity,
+			Stock:            stock,
 			ShortDescription: v.Description,
 			Description:      v.LongDescription,
-			StorageUnitID:    v.StorageUnitID,
+			StorageUnitID:    storageUnitID,
 			Image:            v.Image,
 			Isdefault:        v.Isdefault,
 		}
