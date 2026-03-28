@@ -1,5 +1,7 @@
 import { apiClient } from "@/lib/api-client";
 
+export type OrderStatus = 'PENDING' | 'SHIPPED' | 'DELIVERED';
+
 export interface OrderItem {
   id: number;
   product_id: number;
@@ -14,13 +16,14 @@ export interface OrderItem {
 export interface Order {
   id: string;
   user_id: string;
-  status: string;
+  status: OrderStatus;
   total_amount: number;
   created_at: string;
   shipping_address: string;
   phone_no: string;
   items: OrderItem[];
   customer_name?: string;
+  customer_email?: string;
 }
 
 export interface CreateOrderInput {
@@ -65,7 +68,7 @@ export class OrdersService {
     }
   }
 
-  static async updateStatus(orderId: string, status: string): Promise<void> {
+  static async updateStatus(orderId: string, status: OrderStatus): Promise<void> {
     try {
       await apiClient.put(`/api/orders/update-status/${orderId}`, { status });
     } catch (error) {

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle } from 'lucide-react';
-import { OrdersService, Order } from '@/services/orders.service';
+import { OrdersService, Order, OrderStatus } from '@/services/orders.service';
 
 interface DisplayOrder {
   id: string;
@@ -20,7 +20,7 @@ interface DisplayOrder {
     price: number;
     image: string;
   }[];
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: 'PENDING' | 'SHIPPED' | 'DELIVERED';
   total: number;
   orderDate: string;
   deliveryDate?: string;
@@ -32,7 +32,7 @@ const mapApiOrderToDisplayOrder = (order: Order): DisplayOrder => ({
   orderNumber: `ORD-${order.id.slice(0, 8).toUpperCase()}`,
   customer: {
     name: order.customer_name || 'Unknown',
-    email: '',
+    email: order.customer_email || '',
     phone: order.phone_no || '',
     address: order.shipping_address || '',
   },
@@ -44,9 +44,7 @@ const mapApiOrderToDisplayOrder = (order: Order): DisplayOrder => ({
     price: item.price_at_purchase,
     image: item.image?.[0] || '',
   })) || [],
-  status: (order.status === 'Pending' || order.status === 'Processing' || order.status === 'Shipped' || order.status === 'Delivered' || order.status === 'Cancelled') 
-    ? order.status as DisplayOrder['status'] 
-    : 'Pending',
+  status: order.status as DisplayOrder['status'],
   total: order.total_amount,
   orderDate: order.created_at,
   storage: 'Main Warehouse',
@@ -81,7 +79,7 @@ export default function OrdersManagement() {
   const [selectedOrder, setSelectedOrder] = useState<DisplayOrder | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+  const handleStatusUpdate = async (orderId: string, newStatus: OrderStatus) => {
     try {
       setUpdatingStatus(orderId);
       await OrdersService.updateStatus(orderId, newStatus);
@@ -118,16 +116,12 @@ export default function OrdersManagement() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Pending':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Processing':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Shipped':
+      case 'SHIPPED':
         return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Delivered':
+      case 'DELIVERED':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -135,23 +129,19 @@ export default function OrdersManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Pending':
+      case 'PENDING':
         return <Clock className="w-4 h-4" />;
-      case 'Processing':
-        return <Package className="w-4 h-4" />;
-      case 'Shipped':
+      case 'SHIPPED':
         return <Truck className="w-4 h-4" />;
-      case 'Delivered':
+      case 'DELIVERED':
         return <CheckCircle className="w-4 h-4" />;
-      case 'Cancelled':
-        return <XCircle className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
     }
   };
 
-  const pendingOrders = orders.filter(o => o.status === 'Pending' || o.status === 'Processing');
-  const historyOrders = orders.filter(o => o.status === 'Shipped' || o.status === 'Delivered' || o.status === 'Cancelled');
+  const pendingOrders = orders.filter(o => o.status === 'PENDING');
+  const historyOrders = orders.filter(o => o.status === 'SHIPPED' || o.status === 'DELIVERED');
 
   const filteredOrders = (orderTab === 'pending' ? pendingOrders : historyOrders).filter(order => {
     const matchesSearch =
@@ -208,7 +198,7 @@ export default function OrdersManagement() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Pending</p>
-              <h3 className="text-3xl text-gray-900">{orders.filter(o => o.status === 'Pending').length}</h3>
+              <h3 className="text-3xl text-gray-900">{orders.filter(o => o.status === 'PENDING').length}</h3>
             </div>
             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
               <Clock className="w-6 h-6 text-yellow-700" />
@@ -219,8 +209,8 @@ export default function OrdersManagement() {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Processing</p>
-              <h3 className="text-3xl text-gray-900">{orders.filter(o => o.status === 'Processing').length}</h3>
+              <p className="text-sm text-gray-600 mb-1">Shipped</p>
+              <h3 className="text-3xl text-gray-900">{orders.filter(o => o.status === 'SHIPPED').length}</h3>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
               <Package className="w-6 h-6 text-purple-700" />
@@ -232,7 +222,7 @@ export default function OrdersManagement() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Delivered</p>
-              <h3 className="text-3xl text-gray-900">{orders.filter(o => o.status === 'Delivered').length}</h3>
+              <h3 className="text-3xl text-gray-900">{orders.filter(o => o.status === 'DELIVERED').length}</h3>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircle className="w-6 h-6 text-green-700" />
@@ -305,11 +295,9 @@ export default function OrdersManagement() {
             className="px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition"
           >
             <option value="all">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Processing">Processing</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="PENDING">Pending</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="DELIVERED">Delivered</option>
           </select>
         </div>
       </div>
@@ -411,18 +399,18 @@ export default function OrdersManagement() {
                   <Eye className="w-4 h-4" />
                   View Details
                 </button>
-                {(order.status === 'Pending' || order.status === 'Processing') && (
+                {order.status === 'PENDING' && (
                   <button
-                    onClick={() => handleStatusUpdate(order.id, 'Shipped')}
+                    onClick={() => handleStatusUpdate(order.id, 'SHIPPED')}
                     disabled={updatingStatus === order.id}
                     className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition disabled:opacity-50"
                   >
                     {updatingStatus === order.id ? 'Updating...' : 'Mark as Shipped'}
                   </button>
                 )}
-                {order.status === 'Shipped' && (
+                {order.status === 'SHIPPED' && (
                   <button
-                    onClick={() => handleStatusUpdate(order.id, 'Delivered')}
+                    onClick={() => handleStatusUpdate(order.id, 'DELIVERED')}
                     disabled={updatingStatus === order.id}
                     className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition disabled:opacity-50"
                   >

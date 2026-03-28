@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"vr/types"
 
@@ -11,7 +12,7 @@ func (s *Service) GetAllOrders() ([]types.Order, error) {
 	var dbOrders []types.DBOrder
 
 	_, err := s.client.From("orders").
-		Select("*, order_items(*, product_variants(*), products(id, name))", "exact", false).
+		Select("*, order_items(*, product_variants(*), products(id, name)), users(id, name, email)", "exact", false).
 		Order("created_at", &postgrest.OrderOpts{Ascending: false}).
 		ExecuteTo(&dbOrders)
 	if err != nil {
@@ -19,14 +20,14 @@ func (s *Service) GetAllOrders() ([]types.Order, error) {
 		return nil, types.InternalServerError("Failed to fetch orders")
 	}
 
-	return mapOrders(dbOrders), nil
+	return s.mapOrders(dbOrders), nil
 }
 
 func (s *Service) GetOrdersByUser(userID string) ([]types.Order, error) {
 	var dbOrders []types.DBOrder
 
 	_, err := s.client.From("orders").
-		Select("*, order_items(*, product_variants(*), products(id, name))", "exact", false).
+		Select("*, order_items(*, product_variants(*), products(id, name)), users(id, name, email)", "exact", false).
 		Eq("user_id", userID).
 		Order("created_at", &postgrest.OrderOpts{Ascending: false}).
 		ExecuteTo(&dbOrders)
@@ -35,7 +36,7 @@ func (s *Service) GetOrdersByUser(userID string) ([]types.Order, error) {
 		return nil, types.InternalServerError("Failed to fetch orders for user")
 	}
 
-	return mapOrders(dbOrders), nil
+	return s.mapOrders(dbOrders), nil
 }
 
 func (s *Service) CreateOrder(req types.CreateOrderRequest) (*types.Order, error) {
@@ -49,7 +50,7 @@ func (s *Service) CreateOrder(req types.CreateOrderRequest) (*types.Order, error
 	var newOrders []types.DBOrder
 	_, err := s.client.From("orders").Insert(map[string]interface{}{
 		"user_id":          req.UserID,
-		"status":           "Pending",
+		"status":           types.OrderStatusPending,
 		"total_amount":     totalAmount,
 		"shipping_address": req.ShippingAddress,
 		"phone_no":         req.PhoneNo,
@@ -90,7 +91,7 @@ func (s *Service) CreateOrder(req types.CreateOrderRequest) (*types.Order, error
 		return &types.Order{
 			ID:              orderID,
 			UserID:          req.UserID,
-			Status:          "Pending",
+			Status:          types.OrderStatusPending,
 			TotalAmount:     totalAmount,
 			ShippingAddress: req.ShippingAddress,
 			PhoneNo:         req.PhoneNo,
@@ -101,7 +102,7 @@ func (s *Service) CreateOrder(req types.CreateOrderRequest) (*types.Order, error
 	return &orders[0], nil
 }
 
-func (s *Service) UpdateOrderStatus(orderID string, status string) error {
+func (s *Service) UpdateOrderStatus(orderID string, status types.OrderStatus) error {
 	_, _, err := s.client.From("orders").Update(map[string]interface{}{
 		"status": status,
 	}, "", "").Eq("id", orderID).Execute()
@@ -130,7 +131,7 @@ func (s *Service) DeleteOrder(orderID string) error {
 
 // --- Helpers ---
 
-func mapOrders(dbOrders []types.DBOrder) []types.Order {
+func (s *Service) mapOrders(dbOrders []types.DBOrder) []types.Order {
 	var orders []types.Order
 	for _, o := range dbOrders {
 		var items []types.OrderItem
@@ -154,6 +155,12 @@ func mapOrders(dbOrders []types.DBOrder) []types.Order {
 			items = append(items, oi)
 		}
 
+		var customerName, customerEmail string
+		if o.Profile != nil {
+			customerName = o.Profile.Name
+			customerEmail = o.Profile.Email
+		}
+
 		orders = append(orders, types.Order{
 			ID:              o.ID,
 			UserID:          o.UserID,
@@ -163,7 +170,12 @@ func mapOrders(dbOrders []types.DBOrder) []types.Order {
 			ShippingAddress: o.ShippingAddress,
 			PhoneNo:         o.PhoneNo,
 			Items:           items,
+			CustomerName:    customerName,
+			CustomerEmail:   customerEmail,
+			StorageName:     "ABC",
 		})
 	}
 	return orders
 }
+
+

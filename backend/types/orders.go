@@ -1,16 +1,31 @@
 package types
 
+type OrderStatus string
+
+const (
+	OrderStatusPending   OrderStatus = "PENDING"
+	OrderStatusShipped   OrderStatus = "SHIPPED"
+	OrderStatusDelivered OrderStatus = "DELIVERED"
+)
+
 // --- Database types (matching Supabase/PostgREST JSON) ---
 
 type DBOrder struct {
 	ID              string        `json:"id"`
 	UserID          string        `json:"user_id"`
-	Status          string        `json:"status"`
+	Status          OrderStatus   `json:"status"`
 	TotalAmount     float64       `json:"total_amount"`
 	CreatedAt       string        `json:"created_at"`
 	ShippingAddress string        `json:"shipping_address"`
 	PhoneNo         string        `json:"phone_no"`
 	Items           []DBOrderItem `json:"order_items"`
+	Profile         *DBUser       `json:"users,omitempty"`
+}
+
+type DBUser struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type DBOrderItem struct {
@@ -33,14 +48,15 @@ type DBOrderItem struct {
 type Order struct {
 	ID              string      `json:"id"`
 	UserID          string      `json:"user_id"`
-	Status          string      `json:"status"`
+	Status          OrderStatus `json:"status"`
 	TotalAmount     float64     `json:"total_amount"`
 	CreatedAt       string      `json:"created_at"`
 	ShippingAddress string      `json:"shipping_address"`
 	PhoneNo         string      `json:"phone_no"`
 	Items           []OrderItem `json:"items"`
-	// Customer info (joined from profiles)
-	CustomerName string `json:"customer_name,omitempty"`
+	CustomerName    string      `json:"customer_name,omitempty"`
+	CustomerEmail   string      `json:"customer_email,omitempty"`
+	StorageName     string      `json:"storage_name,omitempty"`
 }
 
 type OrderItem struct {
@@ -71,5 +87,5 @@ type CreateOrderItemInput struct {
 }
 
 type UpdateOrderStatusRequest struct {
-	Status string `json:"status" binding:"required"`
+	Status OrderStatus `json:"status" binding:"required"`
 }

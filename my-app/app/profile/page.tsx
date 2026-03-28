@@ -146,21 +146,21 @@ export default function ProfilePage() {
       date: 'Jan 15, 2025',
       items: 'Premium Jasmine Rice x2',
       total: 49.98,
-      status: 'Delivered'
+      status: 'DELIVERED'
     },
     {
       id: 'ORD-2025-002',
       date: 'Dec 28, 2024',
       items: 'Premium Basmati Rice x1',
       total: 29.99,
-      status: 'Delivered'
+      status: 'DELIVERED'
     },
     {
       id: 'ORD-2024-098',
       date: 'Dec 10, 2024',
       items: 'Brown Rice Blend x3',
       total: 68.97,
-      status: 'Delivered'
+      status: 'DELIVERED'
     }
   ];
 
