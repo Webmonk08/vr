@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle } from 'lucide-react';
+import { OrdersService, Order } from '@/services/orders.service';
 
-interface Order {
+interface DisplayOrder {
   id: string;
   orderNumber: string;
   customer: {
@@ -26,124 +27,94 @@ interface Order {
   storage?: string;
 }
 
+const mapApiOrderToDisplayOrder = (order: Order): DisplayOrder => ({
+  id: order.id,
+  orderNumber: `ORD-${order.id.slice(0, 8).toUpperCase()}`,
+  customer: {
+    name: order.customer_name || 'Unknown',
+    email: '',
+    phone: order.phone_no || '',
+    address: order.shipping_address || '',
+  },
+  products: order.items?.map(item => ({
+    id: String(item.product_id),
+    name: item.product_name || 'Unknown Product',
+    variant: item.weight || 'N/A',
+    quantity: item.quantity,
+    price: item.price_at_purchase,
+    image: item.image?.[0] || '',
+  })) || [],
+  status: (order.status === 'Pending' || order.status === 'Processing' || order.status === 'Shipped' || order.status === 'Delivered' || order.status === 'Cancelled') 
+    ? order.status as DisplayOrder['status'] 
+    : 'Pending',
+  total: order.total_amount,
+  orderDate: order.created_at,
+  storage: 'Main Warehouse',
+});
+
 export default function OrdersManagement() {
   const [orderTab, setOrderTab] = useState<'pending' | 'history'>('pending');
+  const [loading, setLoading] = useState(true);
   
-  // Orders State
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 'ORD-001',
-      orderNumber: 'RH-2025-001',
-      customer: {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 (555) 123-4567',
-        address: '123 Main St, Green Valley, CA 94000'
-      },
-      products: [
-        {
-          id: 'PROD-001',
-          name: 'Premium Jasmine Rice',
-          variant: '5kg',
-          quantity: 2,
-          price: 24.99,
-          image: 'https://images.unsplash.com/photo-1686820740687-426a7b9b2043?w=300'
-        },
-        {
-          id: 'PROD-002',
-          name: 'Premium Basmati Rice',
-          variant: '10kg',
-          quantity: 1,
-          price: 54.99,
-          image: 'https://images.unsplash.com/photo-1633945274417-ab205ae69d10?w=300'
-        }
-      ],
-      status: 'Pending',
-      total: 104.97,
-      orderDate: '2025-03-20T10:30:00',
-      storage: 'Main Warehouse'
-    },
-    {
-      id: 'ORD-002',
-      orderNumber: 'RH-2025-002',
-      customer: {
-        name: 'Sarah Johnson',
-        email: 'sarah.j@example.com',
-        phone: '+1 (555) 234-5678',
-        address: '456 Oak Ave, Green Valley, CA 94001'
-      },
-      products: [
-        {
-          id: 'PROD-001',
-          name: 'Premium Jasmine Rice',
-          variant: '25kg',
-          quantity: 1,
-          price: 119.99,
-          image: 'https://images.unsplash.com/photo-1686820740687-426a7b9b2043?w=300'
-        }
-      ],
-      status: 'Processing',
-      total: 119.99,
-      orderDate: '2025-03-21T14:15:00',
-      storage: 'North Storage'
-    },
-    {
-      id: 'ORD-003',
-      orderNumber: 'RH-2025-003',
-      customer: {
-        name: 'Mike Chen',
-        email: 'mike.chen@example.com',
-        phone: '+1 (555) 345-6789',
-        address: '789 Pine Rd, Green Valley, CA 94002'
-      },
-      products: [
-        {
-          id: 'PROD-003',
-          name: 'Brown Rice Blend',
-          variant: '5kg',
-          quantity: 3,
-          price: 29.99,
-          image: 'https://images.unsplash.com/photo-1633945274417-ab205ae69d10?w=300'
-        }
-      ],
-      status: 'Delivered',
-      total: 89.97,
-      orderDate: '2025-03-15T09:00:00',
-      deliveryDate: '2025-03-18T16:30:00',
-      storage: 'Main Warehouse'
-    },
-    {
-      id: 'ORD-004',
-      orderNumber: 'RH-2025-004',
-      customer: {
-        name: 'Emily Davis',
-        email: 'emily.davis@example.com',
-        phone: '+1 (555) 456-7890',
-        address: '321 Elm St, Green Valley, CA 94003'
-      },
-      products: [
-        {
-          id: 'PROD-002',
-          name: 'Premium Basmati Rice',
-          variant: '5kg',
-          quantity: 4,
-          price: 29.99,
-          image: 'https://images.unsplash.com/photo-1633945274417-ab205ae69d10?w=300'
-        }
-      ],
-      status: 'Shipped',
-      total: 119.96,
-      orderDate: '2025-03-19T11:45:00',
-      storage: 'South Depot'
-    }
-  ]);
+  const [orders, setOrders] = useState<DisplayOrder[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const data = await OrdersService.getAll();
+        setOrders(data.map(mapApiOrderToDisplayOrder));
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [filterProduct, setFilterProduct] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<DisplayOrder | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(orderId);
+      await OrdersService.updateStatus(orderId, newStatus);
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus as DisplayOrder['status'] } : order
+      ));
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      await OrdersService.deleteOrder(orderId);
+      setOrders(orders.filter(order => order.id !== orderId));
+    } catch (error) {
+      console.error('Failed to delete order:', error);
+    }
+  };
+
+  const refreshOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await OrdersService.getAll();
+      setOrders(data.map(mapApiOrderToDisplayOrder));
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -198,8 +169,27 @@ export default function OrdersManagement() {
   const uniqueCustomers = Array.from(new Set(orders.map(o => o.customer.name)));
   const uniqueProducts = Array.from(new Set(orders.flatMap(o => o.products.map(p => p.name))));
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+      </div>
+    );
+  }
+
   return (
     <div>
+      {/* Refresh Button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={refreshOrders}
+          className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-full hover:bg-green-800 transition"
+        >
+          <ShoppingBag className="w-4 h-4" />
+          Refresh Orders
+        </button>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -421,14 +411,28 @@ export default function OrdersManagement() {
                   <Eye className="w-4 h-4" />
                   View Details
                 </button>
-                {order.status === 'Pending' && (
+                {(order.status === 'Pending' || order.status === 'Processing') && (
                   <button
-                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition"
+                    onClick={() => handleStatusUpdate(order.id, 'Shipped')}
+                    disabled={updatingStatus === order.id}
+                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition disabled:opacity-50"
                   >
-                    Update Status
+                    {updatingStatus === order.id ? 'Updating...' : 'Mark as Shipped'}
                   </button>
                 )}
-                <button className="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full transition">
+                {order.status === 'Shipped' && (
+                  <button
+                    onClick={() => handleStatusUpdate(order.id, 'Delivered')}
+                    disabled={updatingStatus === order.id}
+                    className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition disabled:opacity-50"
+                  >
+                    {updatingStatus === order.id ? 'Updating...' : 'Mark as Delivered'}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDeleteOrder(order.id)}
+                  className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-full transition"
+                >
                   <Download className="w-4 h-4" />
                 </button>
               </div>

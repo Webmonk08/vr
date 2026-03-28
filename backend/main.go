@@ -388,5 +388,67 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 	})
 
+	// --- Orders Endpoints ---
+
+	r.GET("/api/orders/getAll", func(c *gin.Context) {
+		orders, err := service.GetAllOrders()
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, orders)
+	})
+
+	r.GET("/api/orders/user", func(c *gin.Context) {
+		userID := c.Query("user_id")
+		if userID == "" {
+			handleError(c, types.BadRequest("user_id is required"))
+			return
+		}
+		orders, err := service.GetOrdersByUser(userID)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, orders)
+	})
+
+	r.POST("/api/orders/create", func(c *gin.Context) {
+		var req types.CreateOrderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		order, err := service.CreateOrder(req)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusCreated, order)
+	})
+
+	r.PUT("/api/orders/update-status/:id", func(c *gin.Context) {
+		orderID := c.Param("id")
+		var req types.UpdateOrderStatusRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		if err := service.UpdateOrderStatus(orderID, req.Status); err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Order status updated"})
+	})
+
+	r.DELETE("/api/orders/delete/:id", func(c *gin.Context) {
+		orderID := c.Param("id")
+		if err := service.DeleteOrder(orderID); err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Order deleted"})
+	})
+
 	r.Run(":8080")
 }
