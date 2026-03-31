@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"vr/types"
 
@@ -98,7 +97,7 @@ func (s *Service) CreateOrder(req types.CreateOrderRequest) (*types.Order, error
 		}, nil
 	}
 
-	orders := mapOrders(fetchedOrders)
+	orders := s.mapOrders(fetchedOrders)
 	return &orders[0], nil
 }
 

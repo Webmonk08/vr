@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle } from 'lucide-react';
+import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle, Printer, X } from 'lucide-react';
 import { OrdersService, Order, OrderStatus } from '@/services/orders.service';
+import { ProductService } from '@/services/products.service';
+import { StorageUnit } from '@/types/product';
 
 interface DisplayOrder {
   id: string;
@@ -55,6 +57,10 @@ export default function OrdersManagement() {
   const [loading, setLoading] = useState(true);
   
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
+  const [storageUnits, setStorageUnits] = useState<StorageUnit[]>([]);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [orderForPrint, setOrderForPrint] = useState<DisplayOrder | null>(null);
+  const [selectedStorageUnits, setSelectedStorageUnits] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -69,6 +75,18 @@ export default function OrdersManagement() {
       }
     };
     fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchStorageUnits = async () => {
+      try {
+        const units = await ProductService.getStorageUnits();
+        setStorageUnits(units);
+      } catch (error) {
+        console.error('Failed to fetch storage units:', error);
+      }
+    };
+    fetchStorageUnits();
   }, []);
 
   // Filter States
@@ -100,6 +118,31 @@ export default function OrdersManagement() {
     } catch (error) {
       console.error('Failed to delete order:', error);
     }
+  };
+
+  const handlePrintClick = (order: DisplayOrder) => {
+    setOrderForPrint(order);
+    const initialSelections: Record<string, string> = {};
+    order.products.forEach((product) => {
+      initialSelections[product.id] = storageUnits[0]?.id?.toString() || '';
+    });
+    setSelectedStorageUnits(initialSelections);
+    setShowPrintModal(true);
+  };
+
+  const handleStorageUnitChange = (productId: string, storageUnitId: string) => {
+    setSelectedStorageUnits((prev) => ({
+      ...prev,
+      [productId]: storageUnitId,
+    }));
+  };
+
+  const handlePrint = () => {
+    console.log('Printing bill for order:', orderForPrint?.orderNumber);
+    console.log('Storage unit assignments:', selectedStorageUnits);
+    console.log('DUMMY PRINT: Sending bill to printer...');
+    console.log('Bill generated successfully!');
+    setShowPrintModal(false);
   };
 
   const refreshOrders = async () => {
@@ -418,8 +461,8 @@ export default function OrdersManagement() {
                   </button>
                 )}
                 <button
-                  onClick={() => handleDeleteOrder(order.id)}
-                  className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-full transition"
+                  onClick={() => handlePrintClick(order)}
+                  className="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full transition"
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -436,6 +479,76 @@ export default function OrdersManagement() {
           </div>
         )}
       </div>
+
+      {/* Print Modal */}
+      {showPrintModal && orderForPrint && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Assign Inventory & Print</h2>
+              <button
+                onClick={() => setShowPrintModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4 p-4 bg-gray-50 rounded-xl">
+                <p className="text-sm text-gray-600">Order Number</p>
+                <p className="text-lg font-semibold text-gray-900">{orderForPrint.orderNumber}</p>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Select Storage Unit for Each Product</h3>
+                <div className="space-y-3">
+                  {orderForPrint.products.map((product, idx) => (
+                    <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                        <p className="text-xs text-gray-500">Qty: {product.quantity}</p>
+                      </div>
+                      <select
+                        value={selectedStorageUnits[product.id] || ''}
+                        onChange={(e) => handleStorageUnitChange(product.id, e.target.value)}
+                        className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-700"
+                      >
+                        {storageUnits.map((unit) => (
+                          <option key={unit.id} value={unit.id}>
+                            {unit.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => setShowPrintModal(false)}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex-1 px-4 py-3 bg-green-700 text-white rounded-full hover:bg-green-800 transition flex items-center justify-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                Print Bill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
