@@ -1,16 +1,14 @@
 import React from 'react';
 import { Edit, Box, Trash2 } from 'lucide-react';
 import { Product } from '@/types/product';
-import { StorageUnit } from '@/types/product';
 
 interface ProductCardProps {
   product: Product;
-  storageUnits: StorageUnit[];
   onSelect: (product: Product) => void;
   onDelete: (e: React.MouseEvent, id: number) => void;
 }
 
-export function ProductCard({ product, storageUnits, onSelect, onDelete }: ProductCardProps) {
+export function ProductCard({ product, onSelect, onDelete }: ProductCardProps) {
   const variants = product.variants || [];
 
   return (
@@ -21,7 +19,7 @@ export function ProductCard({ product, storageUnits, onSelect, onDelete }: Produ
       {/* Product Image */}
       <div className="h-48 overflow-hidden bg-gray-100">
         <img
-          src={variants[0]?.image}
+          src={Array.isArray(variants[0]?.image) ? variants[0].image[0] : (variants[0]?.image || '')}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
         />
@@ -59,12 +57,6 @@ export function ProductCard({ product, storageUnits, onSelect, onDelete }: Produ
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Stock:</span>
               <span className="text-gray-900">{variants[0].stock}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Storage Unit:</span>
-              <span className="text-gray-900 font-mono text-xs">
-                {storageUnits.find((s: any) => s.id === variants[0].storageUnitId)?.name || 'N/A'}
-              </span>
             </div>
           </div>
         )}

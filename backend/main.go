@@ -65,6 +65,7 @@ func main() {
 	}
 
 	service := services.NewService(supabaseClient)
+	storageService := services.NewStorageService(supabaseClient)
 
 	r := gin.Default()
 	r.Use(recoveryMiddleware())
@@ -75,46 +76,37 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// --- Storage Endpoints ---
+	r.POST("/api/upload", func(c *gin.Context) {
+		file, err := c.FormFile("image")
+		if err != nil {
+			handleError(c, types.BadRequest("No image file provided"))
+			return
+		}
+
+		f, err := file.Open()
+		if err != nil {
+			handleError(c, types.InternalServerError("Failed to open image file"))
+			return
+		}
+		defer f.Close()
+
+		fileName := services.GenerateUniqueFileName(file.Filename)
+		url, err := storageService.UploadImage("product_images", &services.FileInfo{
+			FileName:    fileName,
+			Content:     f,
+			ContentType: file.Header.Get("Content-Type"),
+		})
+
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"url": url})
+	})
+
 	// --- Products Endpoints ---
-
-	r.GET("/api/storage-units/getAll", func(c *gin.Context) {
-		storageUnits, err := service.GetStorageUnits()
-		if err != nil {
-			handleError(c, err)
-			return
-		}
-		c.JSON(http.StatusOK, storageUnits)
-	})
-
-	r.GET("/api/storage-units/:sku/products", func(c *gin.Context) {
-		sku := c.Param("sku")
-		products, err := service.GetProductsBySKU(sku)
-		if err != nil {
-			handleError(c, err)
-			return
-		}
-		c.JSON(http.StatusOK, products)
-	})
-
-	r.POST("/api/storage-units/transfer", func(c *gin.Context) {
-		type TransferReq struct {
-			VariantID int    `json:"variant_id"`
-			FromSKU   string `json:"from_sku"`
-			ToSKU     string `json:"to_sku"`
-			Quantity  int    `json:"quantity"`
-		}
-		var req TransferReq
-		if err := c.ShouldBindJSON(&req); err != nil {
-			handleError(c, types.BadRequest(err.Error()))
-			return
-		}
-		
-		if err := service.TransferProduct(req.VariantID, req.FromSKU, req.ToSKU, req.Quantity); err != nil {
-			handleError(c, err)
-			return
-		}
-		c.Status(http.StatusOK)
-	})
 
 	r.GET("/api/products/getAll", func(c *gin.Context) {
 		products, err := service.GetProducts()
@@ -126,19 +118,26 @@ func main() {
 	})
 
 	r.POST("/api/products/create", func(c *gin.Context) {
-		var product types.Product
-		fmt.Println("product", c.Request.Body)
-		if err := c.ShouldBindJSON(&product); err != nil {
-			handleError(c, types.BadRequest(err.Error()))
+		contentType := c.GetHeader("Content-Type")
+		if contentType == "" || contentType == "application/json" {
+			var product types.Product
+			fmt.Println("product", c.Request.Body)
+			if err := c.ShouldBindJSON(&product); err != nil {
+				handleError(c, types.BadRequest(err.Error()))
+				return
+			}
+			fmt.Println("product", product)
+			created, err := service.CreateProduct(product)
+			if err != nil {
+				handleError(c, err)
+				return
+			}
+			
+			c.JSON(http.StatusOK, created)
+		}else {
+			handleError(c, types.BadRequest("Unsupported Content-Type"))
 			return
 		}
-		fmt.Println("product", product)
-		created, err := service.CreateProduct(product)
-		if err != nil {
-			handleError(c, err)
-			return
-		}
-		c.JSON(http.StatusOK, created)
 	})
 
 	r.POST("/api/products/update/:id", func(c *gin.Context) {
@@ -210,6 +209,20 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusOK, item)
+	})
+
+	r.POST("/api/cart/remove", func(c *gin.Context) {
+		var req types.RemoveFromCartRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			handleError(c, types.BadRequest(err.Error()))
+			return
+		}
+		err := service.RemoveFromCart(req)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.Status(http.StatusOK)
 	})
 
 	r.POST("/api/cart/update", func(c *gin.Context) {

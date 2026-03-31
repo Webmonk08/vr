@@ -34,7 +34,7 @@ func (s *Service) GetCart(userID string) ([]types.CartItem, error) {
 	var response []NestedCartItem
 
 	_, err = s.client.From("cart_items").
-		Select("*, product_variants(*, products(*), inventory(*))", "exact", false).
+		Select("*, product_variants(*, products(*))", "exact", false).
 		Eq("cart_id", cartID).
 		ExecuteTo(&response)
 	if err != nil {
@@ -49,25 +49,14 @@ func (s *Service) GetCart(userID string) ([]types.CartItem, error) {
 		}
 
 		v := item.Variant.DBProductVariant
-		
-		var stock int
-		var storageUnitID *string
-		if len(v.Inventory) > 0 {
-			for _, inv := range v.Inventory {
-				stock += inv.Quantity
-			}
-			idStr := v.Inventory[0].StorageUnitID
-			storageUnitID = &idStr
-		}
 
 		variant := &types.ProductVariant{
 			ID:               v.ID,
 			Price:            v.Price,
 			Weight:           fmt.Sprintf("%g %s", v.WeightValue, v.WeightUnit),
-			Stock:            stock,
+			Stock:            v.Stock,
 			ShortDescription: v.Description,
 			Description:      v.LongDescription,
-			StorageUnitID:    storageUnitID,
 			Image:            v.Image,
 			Isdefault:        v.Isdefault,
 		}
@@ -184,6 +173,14 @@ func (s *Service) UpdateCartItem(req types.UpdateCartRequest) error {
 		return types.InternalServerError("Failed to update cart item quantity")
 	}
 
+	return nil
+}
+
+func (s *Service) RemoveFromCart(req types.RemoveFromCartRequest) error {
+	_, _, err := s.client.From("cart_items").Delete("", "").Eq("id", fmt.Sprintf("%d", req.CartID)).Execute()
+	if err != nil {
+		return types.InternalServerError("Failed to remove item from cart")
+	}
 	return nil
 }
 

@@ -1,19 +1,18 @@
 'use client'
-import { ShoppingBag, Warehouse, User2, ShoppingBagIcon } from 'lucide-react';
+import { ShoppingBag, User2, ShoppingBagIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import UserManagementPage from '@/component/user-management'
 import ProductManagement from '@/component/product-management';
 import withAuth from '@/component/withAuth';
 import OrdersManagement from '@/component/orders-management';
-import StorageManagement from '@/component/storage-management';
 
 interface OrderManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
 function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
-  const [activeSection, setActiveSection] = useState<'orders' | 'storage' | 'users'|'product'>('orders');
+  const [activeSection, setActiveSection] = useState<'orders' | 'users' | 'product'>('orders');
   const { role } = useAuthStore()
 
   return (
@@ -23,7 +22,7 @@ function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-4xl text-gray-900 mb-2">Operations Management</h1>
-          <p className="text-gray-600">Manage orders, storage, and inventory</p>
+          <p className="text-gray-600">Manage orders and products</p>
         </div>
 
         {/* Main Tabs */}
@@ -37,16 +36,6 @@ function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
           >
             <ShoppingBag className="w-5 h-5" />
             Orders Management
-          </button>
-          <button
-            onClick={() => setActiveSection('storage')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'storage'
-              ? 'bg-green-700 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-          >
-            <Warehouse className="w-5 h-5" />
-            Storage Management
           </button>
           {role === "OWNER" && (<button
             onClick={() => setActiveSection('users')}
@@ -72,7 +61,6 @@ function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
 
         {/* Sections */}
         {activeSection === 'orders' && <OrdersManagement />}
-        {activeSection === 'storage' && <StorageManagement />}
         {activeSection === 'users' && role === 'OWNER' && <UserManagementPage />}
         {activeSection === 'product' && <ProductManagement />}
       </div>

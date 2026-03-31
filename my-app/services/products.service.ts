@@ -1,4 +1,4 @@
-import { Product, StorageUnit, SKUProduct } from "@/types/product";
+import { Product } from "@/types/product";
 import { apiClient, ApiException } from "@/lib/api-client";
 
 export class ProductService {
@@ -7,37 +7,6 @@ export class ProductService {
     try {
       const data = await apiClient.get<Product[]>('/api/products/getAll');
       return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  static async getStorageUnits(): Promise<StorageUnit[]> {
-    try {
-      const data = await apiClient.get<StorageUnit[]>('/api/storage-units/getAll');
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  static async getProductsBySKU(sku: string | number): Promise<SKUProduct[]> {
-    try {
-      const data = await apiClient.get<SKUProduct[]>(`/api/storage-units/${sku}/products`);
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  static async transferProduct(data: {
-    variant_id: number;
-    from_sku: string;
-    to_sku: string;
-    quantity: number;
-  }): Promise<void> {
-    try {
-      await apiClient.post('/api/storage-units/transfer', data);
     } catch (error) {
       throw error;
     }
@@ -82,6 +51,28 @@ export class ProductService {
     try {
       await apiClient.delete(`/api/products/delete/${id}`);
     } catch (error) {
+      throw error;
+    }
+  }
+
+  static async uploadImage(file: File): Promise<string> {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error('Upload error:', error);
       throw error;
     }
   }

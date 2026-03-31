@@ -38,11 +38,18 @@ export class CartService {
     }
   }
 
-  static async removeItem(cartId: number, productId: number): Promise<void> {
+  static async removeItem(cartId: number, productId: number, productVariantId: number, userId: string): Promise<void> {
+    if (!cartId || !productId || !productVariantId || !userId) {
+      console.error("Missing essential data for removing item:", { cartId, productId, productVariantId, userId });
+      // You might want to throw an error or handle it as per your application's error handling policy
+      throw new Error("Missing essential data for removing item from cart.");
+    }
     try {
       await apiClient.post('/api/cart/remove', {
         cart_id: cartId,
         product_id: productId,
+        product_variant_id: productVariantId,
+        user_id: userId,
       });
     } catch (error) {
       throw error;

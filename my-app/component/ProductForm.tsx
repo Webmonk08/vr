@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Package, Tag, FileText, Image as ImageIcon, Box, DollarSign, Hash, Scale, Barcode } from 'lucide-react';
-import { Product, ProductVariant, StorageUnit } from '@/types/product';
+import { Package, Tag, FileText, Image as ImageIcon, Box, DollarSign, Hash, Scale, Upload, Loader2, X } from 'lucide-react';
+import { Product, ProductVariant } from '@/types/product';
 import { ProductService } from '@/services/products.service';
 
 interface ProductFormProps {
@@ -8,6 +8,7 @@ interface ProductFormProps {
   onSubmit: (data: Product) => void;
 }
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
+  const [isUploading, setIsUploading] = useState<{[key: number]: boolean}>({});
   console.log("product", product)
   const formatVariants = (variants?: ProductVariant[] | any[]) => {
     if (!variants || variants.length === 0) {
@@ -30,25 +31,13 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     }));
   };
 
-  const [storageUnits, setStorageUnits] = useState<StorageUnit[]>([]);
   const [formData, setFormData] = useState<Product>({
     id: product?.id || 0,
     name: product?.name || '',
     variants: formatVariants(product?.variants)
   });
 
-  useEffect(() => {
-    const fetchStorageUnits = async () => {
-      try {
-        const units = await ProductService.getStorageUnits();
-        setStorageUnits(units);
-        console.log("units", units)
-      } catch (error) {
-        console.error('Failed to fetch storage units:', error);
-      }
-    };
-    fetchStorageUnits();
-  }, []);
+  
 
   useEffect(() => {
     if (product) {
@@ -77,6 +66,18 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     console.log(formData['variants'])
   };
 
+  const handleImageUpload = async (index: number, file: File) => {
+    try {
+      setIsUploading(prev => ({ ...prev, [index]: true }));
+      const imageUrl = await ProductService.uploadImage(file);
+      handleVariantChange(index, 'image', imageUrl);
+    } catch (error) {
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
   const addVariant = () => {
     setFormData({
       ...formData,
@@ -88,7 +89,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           shortDescription: '',
           description: '',
           image: '',
-          storageUnitId: storageUnits.length > 0 ? storageUnits[0].id : null,
           stock: 0,
           price: 0,
           isdefault: false
@@ -305,34 +305,62 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   </p>
                 </div>
 
-                {/* Image URL */}
+                {/* Image Upload */}
                 <div className="md:col-span-2">
                   <label className="block text-sm text-gray-700 mb-2">
-                    Image URL <span className="text-red-500">*</span>
+                    Product Image <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <ImageIcon className="w-4 h-4 text-gray-400 absolute left-4 top-4" />
-                    <input
-                      type="url"
-                      value={variant.image}
-                      onChange={(e) => handleVariantChange(index, 'image', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-green-700 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  {variant.image && (
-                    <div className="mt-3 ml-4">
-                      <img
-                        src={variant.image}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-xl border-2 border-gray-200"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+                  <div className="flex flex-col gap-4">
+                    <div className="relative group">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(index, file);
                         }}
+                        className="hidden"
+                        id={`image-upload-${index}`}
+                        disabled={isUploading[index]}
                       />
+                      <label
+                        htmlFor={`image-upload-${index}`}
+                        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-all
+                          ${isUploading[index] ? 'bg-gray-50 border-gray-300' : 'bg-gray-50 border-gray-300 hover:border-green-500 hover:bg-green-50'}`}
+                      >
+                        {isUploading[index] ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="w-8 h-8 text-green-700 animate-spin" />
+                            <span className="text-sm text-gray-500">Uploading...</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="w-8 h-8 text-gray-400 group-hover:text-green-600" />
+                            <span className="text-sm text-gray-500">Click to upload or drag and drop</span>
+                            <span className="text-xs text-gray-400">PNG, JPG, WEBP up to 5MB</span>
+                          </div>
+                        )}
+                      </label>
                     </div>
-                  )}
+
+                    {variant.image && (
+                      <div className="relative w-32 h-32">
+                        <img
+                          src={variant.image}
+                          alt="Preview"
+                          className="w-full h-full object-cover rounded-xl border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleVariantChange(index, 'image', '')}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                          title="Remove image"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Stock Information Container */}
@@ -343,29 +371,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                       Stock Information <span className="text-red-500">*</span>
                     </label>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Storage Unit */}
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-2">
-                          Storage Unit
-                        </label>
-                        <div className="relative">
-                          <Barcode className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <select
-                            value={variant.storageUnitId ?? ''} // If null/undefined, it defaults to ''
-                            onChange={(e) => handleVariantChange(index, 'storageUnitId', e.target.value ? e.target.value : null)}
-                            className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none text-sm appearance-none bg-white"
-                            required
-                          >
-                            {/* The Initial Placeholder Option */}
-                            <option value="" disabled>Select Storage Unit</option>
-
-                            {storageUnits.map(unit => (
-                              <option key={unit.id} value={unit.id}>{unit.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      
 
                       {/* Stock Quantity */}
                       <div>
@@ -417,7 +424,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     shortDescription: '',
                     description: '',
                     image: '',
-                    storageUnitId: storageUnits.length > 0 ? storageUnits[0].id : null,
                     stock: 0,
                     price: 0,
                     isdefault: false

@@ -29,13 +29,6 @@ const ProductManagement = () => {
   });
   const products = data || [];
 
-  const { data: storageUnitsData } = useQuery({
-    queryKey: ['storageUnits'],
-    queryFn: ProductService.getStorageUnits,
-  });
-  const storageUnits = storageUnitsData || [];
-
-
   const createProductMutation = useMutation({
     mutationFn: ProductService.create,
     onSuccess: () => {
@@ -187,7 +180,6 @@ const ProductManagement = () => {
                       <ProductCard
                         key={product.id}
                         product={product}
-                        storageUnits={storageUnits}
                         onSelect={setSelectedProduct}
                         onDelete={handleDeleteProduct}
                       />
@@ -203,7 +195,6 @@ const ProductManagement = () => {
       {showConfirmModal && pendingFormData && (
         <ConfirmationModal
           formData={pendingFormData}
-          storageUnits={storageUnits}
           onConfirm={handleConfirmSubmit}
           onCancel={() => {
             setShowConfirmModal(false);

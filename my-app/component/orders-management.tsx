@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle, Printer, X } from 'lucide-react';
 import { OrdersService, Order, OrderStatus } from '@/services/orders.service';
 import { ProductService } from '@/services/products.service';
-import { StorageUnit } from '@/types/product';
 
 interface DisplayOrder {
   id: string;
@@ -57,7 +56,6 @@ export default function OrdersManagement() {
   const [loading, setLoading] = useState(true);
   
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
-  const [storageUnits, setStorageUnits] = useState<StorageUnit[]>([]);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [orderForPrint, setOrderForPrint] = useState<DisplayOrder | null>(null);
   const [selectedStorageUnits, setSelectedStorageUnits] = useState<Record<string, string>>({});
@@ -77,17 +75,7 @@ export default function OrdersManagement() {
     fetchOrders();
   }, []);
 
-  useEffect(() => {
-    const fetchStorageUnits = async () => {
-      try {
-        const units = await ProductService.getStorageUnits();
-        setStorageUnits(units);
-      } catch (error) {
-        console.error('Failed to fetch storage units:', error);
-      }
-    };
-    fetchStorageUnits();
-  }, []);
+
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,11 +110,6 @@ export default function OrdersManagement() {
 
   const handlePrintClick = (order: DisplayOrder) => {
     setOrderForPrint(order);
-    const initialSelections: Record<string, string> = {};
-    order.products.forEach((product) => {
-      initialSelections[product.id] = storageUnits[0]?.id?.toString() || '';
-    });
-    setSelectedStorageUnits(initialSelections);
     setShowPrintModal(true);
   };
 
@@ -514,17 +497,7 @@ export default function OrdersManagement() {
                         <p className="text-sm font-medium text-gray-900">{product.name}</p>
                         <p className="text-xs text-gray-500">Qty: {product.quantity}</p>
                       </div>
-                      <select
-                        value={selectedStorageUnits[product.id] || ''}
-                        onChange={(e) => handleStorageUnitChange(product.id, e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-700"
-                      >
-                        {storageUnits.map((unit) => (
-                          <option key={unit.id} value={unit.id}>
-                            {unit.name}
-                          </option>
-                        ))}
-                      </select>
+                      
                     </div>
                   ))}
                 </div>

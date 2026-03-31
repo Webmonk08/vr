@@ -10,28 +10,16 @@ type DBProduct struct {
 }
 
 type DBProductVariant struct {
-	ID              int           `json:"id"`
-	ProductID       int           `json:"product_id"`
-	Price           float64       `json:"price"`
-	WeightValue     float64       `json:"weight_value"`
-	WeightUnit      string        `json:"weight_unit"`
-	Description     string        `json:"description"`
-	LongDescription string        `json:"long_description"`
-	Image           []string      `json:"image"`
-	Isdefault       bool          `json:"isdefault"`
-	Inventory       []DBInventory `json:"inventory"` // Joined from inventory table
-}
-
-type DBInventory struct {
-	ID            string `json:"id"`
-	VariantID     int    `json:"variant_id"`
-	StorageUnitID string `json:"storage_unit_id"`
-	Quantity      int    `json:"quantity"`
-}
-
-type StorageUnit struct {
-	ID   string    `json:"id"`
-	Name string `json:"name"`
+	ID              int      `json:"id"`
+	ProductID       int      `json:"product_id"`
+	Price           float64  `json:"price"`
+	WeightValue     float64  `json:"weight_value"`
+	WeightUnit      string   `json:"weight_unit"`
+	Description     string   `json:"description"`
+	LongDescription string   `json:"long_description"`
+	Image           []string `json:"image"`
+	Isdefault       bool     `json:"isdefault"`
+	Stock           int      `json:"stock"`
 }
 
 type DBCartItem struct {
@@ -56,7 +44,6 @@ type ProductVariant struct {
 	Stock            int      `json:"stock"`
 	ShortDescription string   `json:"shortDescription"`
 	Description      string   `json:"description"`
-	StorageUnitID    *string     `json:"storageUnitId"`
 	Image            []string `json:"image"`
 	Isdefault        bool     `json:"isdefault"`
 }
@@ -77,6 +64,13 @@ type AddToCartRequest struct {
 	ProductID int    `json:"product_id"`
 	VariantID int    `json:"variant_id"`
 	UserID    string `json:"user_id"`
+}
+
+type RemoveFromCartRequest struct {
+	CartID           int64  `json:"cart_id"`
+	ProductID       int    `json:"product_id"`
+	ProductVariantID int    `json:"product_variant_id"`
+	UserID           string `json:"user_id"`
 }
 
 type UpdateCartRequest struct {
@@ -127,14 +121,13 @@ type User struct {
 	Email    string `json:"email"`
 }
 
-type SKUProduct struct {
-	ProductName   string      `json:"product_name"`
-	VariantID     int         `json:"variant_id"`
-	Price         float64     `json:"price"`
-	StockQuantity int         `json:"stock_quantity"`
-	WeightValue   float64     `json:"weight_value"`
-	WeightUnit    string      `json:"weight_unit"`
-	Description   string      `json:"description"`
-	Image         interface{} `json:"image"`
-	IsDefault     bool        `json:"is_default"`
+type FileInfo struct {
+	FileName    string `json:"fileName"`
+	Content     string `json:"content"` // base64 encoded
+	ContentType string `json:"contentType"`
+}
+
+type ProductWithFiles struct {
+	Product Product             `json:"product"`
+	Files   map[int][]*FileInfo `json:"files"`
 }

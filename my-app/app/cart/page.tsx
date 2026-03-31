@@ -8,6 +8,7 @@ import { CartService } from "@/services/cart.service";
 import { CartItem } from "@/types/cart.types";
 import LoadingPage from '@/component/loadingPage';
 import withAuth from '@/component/withAuth';
+import Link from 'next/link';
 
 interface CartPageProps {
   onNavigate: (page: string) => void;
@@ -67,8 +68,15 @@ function CartPage({ onNavigate }: CartPageProps) {
 
   // Remove item mutation
   const { mutate: removeItem } = useMutation({
-    mutationFn: ({ cartId, productId }: { cartId: number; productId: number }) =>
-      CartService.removeItem(cartId, productId),
+    mutationFn: ({
+      cartId,
+      productId,
+      productVariantId,
+    }: {
+      cartId: number;
+      productId: number;
+      productVariantId: number;
+    }) => CartService.removeItem(cartId, productId, productVariantId, user!.id),
     onMutate: async ({ cartId }) => {
       await queryClient.cancelQueries({ queryKey: ["cart", user?.id] });
       const previousCart = queryClient.getQueryData<CartItem[]>(["cart", user?.id]);
@@ -146,7 +154,11 @@ function CartPage({ onNavigate }: CartPageProps) {
 
   const handleRemoveItem = (item: CartItem) => {
     if (user) {
-      removeItem({ cartId: item.id, productId: item.product.id });
+      removeItem({
+        cartId: item.id,
+        productId: item.product.id,
+        productVariantId: item.variant.id,
+      });
     } else {
       removeGuestItem(item.id);
     }
@@ -174,13 +186,16 @@ function CartPage({ onNavigate }: CartPageProps) {
             </div>
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Your Cart is Empty</h2>
             <p className="text-gray-600 mb-8">Looks like you haven't added any items to your cart yet.</p>
+            <Link href = "/products">
             <button
-              onClick={() => onNavigate('product')}
+              
               className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-full transition inline-flex items-center gap-2"
             >
               Start Shopping
               <ArrowRight size={20} />
             </button>
+            </Link>
+
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
