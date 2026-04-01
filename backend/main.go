@@ -76,6 +76,11 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// --- Health Check ---
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
 	// --- Storage Endpoints ---
 	r.POST("/api/upload", func(c *gin.Context) {
 		file, err := c.FormFile("image")
