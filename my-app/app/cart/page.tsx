@@ -342,11 +342,12 @@ function CartPage({ onNavigate }: CartPageProps) {
                   </div>
                 </div>
 
-                {/* Checkout Button */}
-                <button className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition font-semibold flex items-center justify-center gap-2 mb-3">
-                  Proceed to Checkout
-                  <ArrowRight size={20} />
-                </button>
+                <Link href="/checkout">
+                  <button className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition font-semibold flex items-center justify-center gap-2 mb-3">
+                    Proceed to Checkout
+                    <ArrowRight size={20} />
+                  </button>
+                </Link>
 
                 <button
                   onClick={() => (user ? clearCart() : clearGuestCart())}

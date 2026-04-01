@@ -79,6 +79,15 @@ const ProductManagement = () => {
   };
 
   const handleFormSubmit = (formData: Product) => {
+    // Check for duplicate product name (case-insensitive) using already-fetched products
+    const duplicate = products.find(
+      (p) => p.name.toLowerCase() === formData.name.toLowerCase() && p.id !== formData.id
+    );
+    if (duplicate) {
+      alert('A product with this name already exists. Please use a different name.');
+      return;
+    }
+
     setPendingFormData(formData);
     setShowConfirmModal(true);
   };

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle, Printer, X } from 'lucide-react';
 import { OrdersService, Order, OrderStatus } from '@/services/orders.service';
 import { ProductService } from '@/services/products.service';
+import { useRouter } from 'next/navigation';
 
 interface DisplayOrder {
   id: string;
@@ -52,6 +53,7 @@ const mapApiOrderToDisplayOrder = (order: Order): DisplayOrder => ({
 });
 
 export default function OrdersManagement() {
+  const router = useRouter();
   const [orderTab, setOrderTab] = useState<'pending' | 'history'>('pending');
   const [loading, setLoading] = useState(true);
   
@@ -419,7 +421,7 @@ export default function OrdersManagement() {
               {/* Actions */}
               <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
                 <button
-                  onClick={() => setSelectedOrder(order)}
+                  onClick={() => router.push(`/order/${order.id}`)}
                   className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition flex items-center justify-center gap-2"
                 >
                   <Eye className="w-4 h-4" />
