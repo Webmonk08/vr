@@ -1,11 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { Wheat, User, Mail, Phone, MapPin, Lock, Eye, EyeOff, LogOut, ShoppingBag, Settings } from 'lucide-react';
+import { Wheat, User, Mail, Phone, MapPin, Lock, Eye, EyeOff, LogOut, ShoppingBag, Settings, Clock, Truck, CheckCircle, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUserProfile, updateUser, changePassword } from '@/services/user.service';
+import { OrdersService, Order } from '@/services/orders.service';
 import { ErrorPage } from '@/component/error-page';
+import Link from 'next/link';
 
 
 export default function ProfilePage() {
@@ -140,29 +142,19 @@ export default function ProfilePage() {
     return null;
   }
 
-  const orderHistory = [
-    {
-      id: 'ORD-2025-001',
-      date: 'Jan 15, 2025',
-      items: 'Premium Jasmine Rice x2',
-      total: 49.98,
-      status: 'DELIVERED'
-    },
-    {
-      id: 'ORD-2025-002',
-      date: 'Dec 28, 2024',
-      items: 'Premium Basmati Rice x1',
-      total: 29.99,
-      status: 'DELIVERED'
-    },
-    {
-      id: 'ORD-2024-098',
-      date: 'Dec 10, 2024',
-      items: 'Brown Rice Blend x3',
-      total: 68.97,
-      status: 'DELIVERED'
-    }
-  ];
+  // Fetch real user orders
+  const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ['userOrders', user?.id],
+    queryFn: () => OrdersService.getByUser(user?.id || ''),
+    enabled: !!user?.id,
+  });
+
+  // Compute account overview stats
+  const totalOrders = userOrders?.length || 0;
+  const totalSpent = userOrders?.reduce((sum, o) => sum + o.total_amount, 0) || 0;
+  const pendingOrders = userOrders?.filter(o => o.status === 'PENDING').length || 0;
+  const deliveredOrders = userOrders?.filter(o => o.status === 'DELIVERED').length || 0;
+  const recentOrders = userOrders?.slice(0, 5) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -396,27 +388,69 @@ export default function ProfilePage() {
 
             {/* Order History */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-xl mb-6 text-gray-900">Recent Orders</h2>
-              <div className="space-y-4">
-                {orderHistory.map((order) => (
-                  <div key={order.id} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-green-200 transition">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Order #{order.id}</span>
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-gray-900 mb-1">{order.items}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{order.date}</span>
-                      <span className="text-gray-900">${order.total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 mb-6">
+                <ShoppingBag className="w-5 h-5 text-green-700" />
+                <h2 className="text-xl text-gray-900">Recent Orders</h2>
               </div>
-              <button className="w-full mt-4 text-green-700 hover:text-green-800 transition py-2">
-                View All Orders →
-              </button>
+              {ordersLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
+                </div>
+              ) : recentOrders.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No orders yet</p>
+                  <Link href="/products">
+                    <button className="mt-3 text-green-700 hover:text-green-800 transition text-sm">Start Shopping →</button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentOrders.map((order) => {
+                    const statusColor = order.status === 'DELIVERED'
+                      ? 'bg-green-100 text-green-700'
+                      : order.status === 'SHIPPED'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-yellow-100 text-yellow-700';
+                    const StatusIcon = order.status === 'DELIVERED'
+                      ? CheckCircle
+                      : order.status === 'SHIPPED'
+                        ? Truck
+                        : Clock;
+                    const itemSummary = order.items
+                      ?.map(item => `${item.product_name || 'Product'} x${item.quantity}`)
+                      .join(', ') || 'No items';
+
+                    return (
+                      <Link key={order.id} href={`/order/${order.id}`}>
+                        <div className="border-2 border-gray-100 rounded-2xl p-4 hover:border-green-200 transition cursor-pointer">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">ORD-{order.id.slice(0, 8).toUpperCase()}</span>
+                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                              <StatusIcon className="w-3 h-3" />
+                              {order.status}
+                            </span>
+                          </div>
+                          <p className="text-gray-900 mb-1 text-sm truncate">{itemSummary}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500">
+                              {new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </span>
+                            <span className="font-semibold text-gray-900">${order.total_amount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+              {totalOrders > 5 && (
+                <Link href="/order">
+                  <button className="w-full mt-4 text-green-700 hover:text-green-800 transition py-2 text-sm font-medium">
+                    View All Orders ({totalOrders}) →
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -428,11 +462,19 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 <div className="bg-green-50 p-4 rounded-xl">
                   <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                  <p className="text-2xl text-gray-900">12</p>
+                  <p className="text-2xl text-gray-900">{totalOrders}</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-xl">
                   <p className="text-sm text-gray-600 mb-1">Total Spent</p>
-                  <p className="text-2xl text-gray-900">$348.94</p>
+                  <p className="text-2xl text-gray-900">${totalSpent.toFixed(2)}</p>
+                </div>
+                <div className="bg-yellow-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 mb-1">Pending</p>
+                  <p className="text-2xl text-gray-900">{pendingOrders}</p>
+                </div>
+                <div className="bg-emerald-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 mb-1">Delivered</p>
+                  <p className="text-2xl text-gray-900">{deliveredOrders}</p>
                 </div>
               </div>
             </div>

@@ -46,8 +46,9 @@ const Header = () => {
             </Link>
             {(!user && currPath !== '/login' && currPath !== '/signup') ? (
               // Condition is TRUE: Show Login
-              <Link href="/login">
-                logIn
+              <Link href="/login" className="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-full transition flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Log In
               </Link>
             ) : (
               // Condition is FALSE (User is logged in): Show Logout
