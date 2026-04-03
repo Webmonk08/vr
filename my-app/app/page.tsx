@@ -16,7 +16,6 @@ export default function App() {
     }
   }, [user, role, router])
 
-  console.log("Role", role)
   // Home Page
   const features = [
     {

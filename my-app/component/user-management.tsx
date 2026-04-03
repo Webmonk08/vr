@@ -1,7 +1,7 @@
 
 'use client'
 import withAuth from '@/component/withAuth';
-import { UserManagementService, UserManagementData, CreateUserPayload, UpdateUserPayload , ROLES, Role} from '@/services/userManagement.service';
+import { UserManagementService, UserManagementData, CreateUserPayload, UpdateUserPayload, ROLES, Role } from '@/services/userManagement.service';
 import { Search, Plus, Loader2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { UserStats } from '@/component/UserStats';
@@ -32,7 +32,7 @@ const UserManagementPage = () => {
 
   const [editPayload, setEditPayload] = useState<UpdateUserPayload>({});
 
-  const roles = ["Choose the Role " , 'admin', 'manager', 'owner', 'customer'];
+  const roles = ["Choose the Role ", 'admin', 'manager', 'owner', 'customer'];
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -73,7 +73,6 @@ const UserManagementPage = () => {
     if (!editingUser) return;
     try {
       setActionLoading(true);
-      console.log("Gonna Update teh user" , editPayload)
       await UserManagementService.update(editingUser.id, editPayload);
       setShowEditModal(false);
       setEditingUser(null);
@@ -206,7 +205,7 @@ const UserManagementPage = () => {
         roles={roles}
         actionLoading={actionLoading}
       />
-      
+
       <EditUserModal
         show={showEditModal && editingUser !== null}
         onClose={() => {
@@ -220,7 +219,7 @@ const UserManagementPage = () => {
         roles={roles}
         actionLoading={actionLoading}
       />
-      
+
       <DeleteUserConfirm
         show={showDeleteConfirm}
         onClose={() => {

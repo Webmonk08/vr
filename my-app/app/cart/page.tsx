@@ -34,7 +34,7 @@ function CartPage({ onNavigate }: CartPageProps) {
     queryFn: () => CartService.getCart(user?.id),
     enabled: !!user,
   });
-  console.log("after", userCart)
+ 
   // Update quantity mutation
   const { mutate: updateQuantity } = useMutation({
     mutationFn: ({
@@ -50,7 +50,7 @@ function CartPage({ onNavigate }: CartPageProps) {
       await queryClient.cancelQueries({ queryKey: ["cart", user?.id] });
       const previousCart = queryClient.getQueryData<CartItem[]>(["cart", user?.id]);
       if (previousCart) {
-        queryClient.setQueryData<CartItem[]>(["cart", user?.id], previousCart.map(item => 
+        queryClient.setQueryData<CartItem[]>(["cart", user?.id], previousCart.map(item =>
           item.id === itemId ? { ...item, quantity } : item
         ));
       }
@@ -116,7 +116,7 @@ function CartPage({ onNavigate }: CartPageProps) {
 
   // Use appropriate cart based on authentication
   const cart = user ? userCart : guestCart;
-  console.log("usercart", userCart)
+ 
   // Calculate totals
   const subtotal = useMemo(() => {
     return (
@@ -167,7 +167,7 @@ function CartPage({ onNavigate }: CartPageProps) {
   if (isLoading) {
     return <LoadingPage />;
   }
-  console.log(cart)
+  (cart)
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -186,14 +186,14 @@ function CartPage({ onNavigate }: CartPageProps) {
             </div>
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Your Cart is Empty</h2>
             <p className="text-gray-600 mb-8">Looks like you haven't added any items to your cart yet.</p>
-            <Link href = "/products">
-            <button
-              
-              className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-full transition inline-flex items-center gap-2"
-            >
-              Start Shopping
-              <ArrowRight size={20} />
-            </button>
+            <Link href="/products">
+              <button
+
+                className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-full transition inline-flex items-center gap-2"
+              >
+                Start Shopping
+                <ArrowRight size={20} />
+              </button>
             </Link>
 
           </div>
@@ -366,4 +366,4 @@ function CartPage({ onNavigate }: CartPageProps) {
   );
 }
 
-export default withAuth(CartPage, ['ADMIN', 'MANAGER', 'CUSTOMER' , 'OWNER']);
+export default withAuth(CartPage, ['ADMIN', 'MANAGER', 'CUSTOMER', 'OWNER']);

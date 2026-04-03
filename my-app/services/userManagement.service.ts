@@ -64,7 +64,7 @@ export class UserManagementService {
 
   static async update(id: string, payload: UpdateUserPayload): Promise<UserManagementData> {
     try {
-      console.log(payload);
+      (payload);
       const data = await apiClient.put<UserManagementData>(`/api/users/update/${id}`, payload);
       toast.success('User updated successfully');
       return data;

@@ -20,7 +20,6 @@ export default function ProfilePage() {
     queryKey: ['userProfile', user?.id],
     queryFn: () => getUserProfile(user?.id || ''),
   });
-  console.log(userData)
   if (userData) {
     userData.email = user?.email || ''
   }

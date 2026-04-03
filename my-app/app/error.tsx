@@ -15,9 +15,9 @@ export default function Error({
   }, [error]);
 
   return (
-    <ErrorPage 
-      errorType="general" 
-      message={error.message || "Something went wrong!"} 
+    <ErrorPage
+      errorType="general"
+      message={error.message || "Something went wrong!"}
       onNavigate={(page) => {
         if (page === 'home') window.location.href = '/';
         else window.location.href = `/${page}`;
