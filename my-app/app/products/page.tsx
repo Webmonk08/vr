@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, ShoppingCart } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ProductService } from '@/services/products.service';
 import { CartService } from '@/services/cart.service';
@@ -14,7 +14,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const products = () => {
+const ProductsContent = () => {
   const { user, role } = useAuthStore();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
@@ -230,4 +230,12 @@ const products = () => {
   );
 };
 
-export default products;
+const ProductsPage = () => {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <ProductsContent />
+    </Suspense>
+  );
+};
+
+export default ProductsPage;
