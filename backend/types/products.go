@@ -13,6 +13,7 @@ type DBProductVariant struct {
 	ID              int      `json:"id"`
 	ProductID       int      `json:"product_id"`
 	Price           float64  `json:"price"`
+	OriginalPrice   float64  `json:"original_price"`
 	WeightValue     float64  `json:"weight_value"`
 	WeightUnit      string   `json:"weight_unit"`
 	Description     string   `json:"description"`
@@ -20,6 +21,8 @@ type DBProductVariant struct {
 	Image           []string `json:"image"`
 	Isdefault       bool     `json:"isdefault"`
 	Stock           int      `json:"stock"`
+	Category        string   `json:"category"`
+	Features        []string `json:"features"`
 }
 
 type DBCartItem struct {
@@ -39,13 +42,17 @@ type Product struct {
 
 type ProductVariant struct {
 	ID               int      `json:"id"`
+	ProductID        int      `json:"product_id"`
 	Price            float64  `json:"price"`
+	OriginalPrice    float64  `json:"originalPrice"`
 	Weight           string   `json:"weight"`
 	Stock            int      `json:"stock"`
 	ShortDescription string   `json:"shortDescription"`
 	Description      string   `json:"description"`
 	Image            []string `json:"image"`
 	Isdefault        bool     `json:"isdefault"`
+	Category         string   `json:"category"`
+	Features         []string `json:"features"`
 }
 type CartProduct struct {
 	ID   int    `json:"id"`
@@ -64,11 +71,12 @@ type AddToCartRequest struct {
 	ProductID int    `json:"product_id"`
 	VariantID int    `json:"variant_id"`
 	UserID    string `json:"user_id"`
+	Quantity  int    `json:"quantity"`
 }
 
 type RemoveFromCartRequest struct {
 	CartID           int64  `json:"cart_id"`
-	ProductID       int    `json:"product_id"`
+	ProductID        int    `json:"product_id"`
 	ProductVariantID int    `json:"product_variant_id"`
 	UserID           string `json:"user_id"`
 }

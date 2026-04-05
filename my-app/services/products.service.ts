@@ -1,4 +1,4 @@
-import { Product } from "@/types/product";
+import { Product,ProductVariant } from "@/types/product";
 import { apiClient, ApiException } from "@/lib/api-client";
 
 export class ProductService {
@@ -6,6 +6,16 @@ export class ProductService {
   static async getAll(): Promise<Product[]> {
     try {
       const data = await apiClient.get<Product[]>('/api/products/getAll');
+      console.log("data", data)
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getById(id: number): Promise<Product> {
+    try {
+      const data = await apiClient.get<Product>(`/api/products/get/${id}`);
       return data;
     } catch (error) {
       throw error;
@@ -14,14 +24,7 @@ export class ProductService {
 
   static async create(product: Product): Promise<Product> {
     try {
-      const payload = {
-        ...product,
-        variants: product.variants.map(v => ({
-          ...v,
-          image: typeof v.image === 'string' ? [v.image] : v.image
-        }))
-      };
-      const data = await apiClient.post<Product>('/api/products/create', payload);
+      const data = await apiClient.post<Product>('/api/products/create', product);
       return data;
     } catch (error) {
       throw error;
@@ -32,13 +35,7 @@ export class ProductService {
     try {
       const payload = {
         id: id,
-        data: {
-          ...product,
-          variants: product.variants.map(v => ({
-            ...v,
-            image: typeof v.image === 'string' ? [v.image] : v.image
-          }))
-        }
+        data: product
       };
       const data = await apiClient.post<Product>(`/api/products/update/${id}`, payload);
       return data;
@@ -50,6 +47,15 @@ export class ProductService {
   static async deleteProduct(id: number): Promise<void> {
     try {
       await apiClient.delete(`/api/products/delete/${id}`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getRelated(variantId: number): Promise<ProductVariant[]> {
+    try {
+      const data = await apiClient.get<ProductVariant[]>(`/api/products/related/${variantId}`);
+      return data;
     } catch (error) {
       throw error;
     }

@@ -18,7 +18,7 @@ BEGIN
     LOOP
         INSERT INTO product_variants (
             product_id, price, weight_value, weight_unit, 
-            description, long_description, image, isdefault, stock
+            description, long_description, image, isdefault, stock, category, features
         ) VALUES (
             new_product_id,
             (v_variant->>'price')::numeric,
@@ -28,7 +28,9 @@ BEGIN
             v_variant->>'long_description',
             v_variant->'image',
             COALESCE((v_variant->>'isdefault')::boolean, false),
-            COALESCE((v_variant->>'stock')::int, 0)
+            COALESCE((v_variant->>'stock')::int, 0),
+            v_variant->>'category',
+            COALESCE(v_variant->'features', '[]'::jsonb)
         ) RETURNING id INTO new_variant_id;
     END LOOP;
 
@@ -76,12 +78,14 @@ BEGIN
                 long_description = v_variant->>'long_description',
                 image = v_variant->'image',
                 isdefault = COALESCE((v_variant->>'isdefault')::boolean, false),
-                stock = COALESCE((v_variant->>'stock')::int, 0)
+                stock = COALESCE((v_variant->>'stock')::int, 0),
+                category = v_variant->>'category',
+                features = COALESCE(v_variant->'features', '[]'::jsonb)
             WHERE id = (v_variant->>'id')::int AND product_id = p_product_id;
         ELSE
             INSERT INTO product_variants (
                 product_id, price, weight_value, weight_unit, 
-                description, long_description, image, isdefault, stock
+                description, long_description, image, isdefault, stock, category, features
             ) VALUES (
                 p_product_id,
                 (v_variant->>'price')::numeric,
@@ -91,7 +95,9 @@ BEGIN
                 v_variant->>'long_description',
                 v_variant->'image',
                 COALESCE((v_variant->>'isdefault')::boolean, false),
-                COALESCE((v_variant->>'stock')::int, 0)
+                COALESCE((v_variant->>'stock')::int, 0),
+                v_variant->>'category',
+                COALESCE(v_variant->'features', '[]'::jsonb)
             );
         END IF;
     END LOOP;

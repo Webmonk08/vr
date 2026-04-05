@@ -5,15 +5,19 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ProductService } from '@/services/products.service';
 import { CartService } from '@/services/cart.service';
-import { Product } from '@/types/product';
+import { Product, ProductVariant } from '@/types/product';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LoadingPage from '@/component/loadingPage';
 import { ErrorPage } from '@/component/error-page';
 import Link from 'next/link';
+import { useCartStore } from '@/store/useCartStore';
+import { toast } from '@/store/useToastStore';
+import { useRouter } from 'next/navigation';
 
 const products = () => {
   const { user, role } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, error } = useQuery<Product[], Error>({
@@ -22,13 +26,31 @@ const products = () => {
   });
   const products = data || [];
 
-  const { mutate: addToCart } = useMutation({
-    mutationFn: ({ productId, variantId, userId }: { productId: number; variantId: number; userId: string }) =>
-      CartService.addItem(productId, variantId, userId),
+  const categories = ['All', ...Array.from(new Set(products.flatMap(p => p.variants.map(v => v.category)).filter(Boolean)))];
+
+  const router = useRouter();
+  const { addToCart: guestAddToCart } = useCartStore();
+
+  const { mutate: addCartMutation } = useMutation({
+    mutationFn: ({ productId, variantId, userId, quantity }: { productId: number; variantId: number; userId: string, quantity: number }) =>
+      CartService.addItem(productId, variantId, userId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success("Successfully added to cart!");
     },
+    onError: () => {
+      toast.error("Failed to add to cart.");
+    }
   });
+
+  const handleAddToCart = (productParam: Product, variantParam: ProductVariant, quantity = 1) => {
+    if (user) {
+      addCartMutation({ productId: productParam.id, variantId: variantParam.id, userId: user.id, quantity });
+    } else {
+      guestAddToCart({ product: productParam, variant: variantParam, quantity, id: Date.now() } as any);
+      toast.success("Successfully added to cart!");
+    }
+  };
 
   useEffect(() => {
     if (isError) {
@@ -40,11 +62,14 @@ const products = () => {
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       Array.isArray(product.variants) &&
-      product.variants.length > 0
+      product.variants.length > 0 &&
+      (selectedCategory === 'All' || product.variants.some(v => v.category === selectedCategory))
   );
 
   const displayItems = filteredProducts.flatMap(product => 
-    product.variants.map(variant => ({ product, variant }))
+    product.variants
+      .filter(v => selectedCategory === 'All' || v.category === selectedCategory)
+      .map(variant => ({ product, variant }))
   );
 
   if (isLoading) return <LoadingPage />;
@@ -98,20 +123,38 @@ const products = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
 
         {/* Toolbar row */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-          <p className="text-gray-600 text-sm sm:text-base">
-            Showing <span className="font-semibold text-gray-900">{displayItems.length}</span>{' '}
-            {displayItems.length === 1 ? 'product' : 'products'}
-          </p>
-          <select
-            title="sort"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 text-sm bg-white"
-          >
-            <option>Sort by: Featured</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Rating: High to Low</option>
-          </select>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
+          <div className="flex flex-wrap items-center gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  selectedCategory === category
+                    ? 'bg-green-700 text-white shadow-md'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <p className="text-gray-600 text-sm whitespace-nowrap">
+              <span className="font-semibold text-gray-900">{displayItems.length}</span>{' '}
+              {displayItems.length === 1 ? 'product' : 'products'}
+            </p>
+            <select
+              title="sort"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 text-sm bg-white"
+            >
+              <option>Sort by: Featured</option>
+              <option>Price: Low to High</option>
+              <option>Price: High to Low</option>
+              <option>Rating: High to Low</option>
+            </select>
+          </div>
         </div>
 
         {/* Product Grid */}
@@ -120,14 +163,18 @@ const products = () => {
             {displayItems.map(({ product, variant }) => (
               <div
                 key={`${product.id}-${variant.id}`}
-                className="group flex flex-col bg-white shadow-sm hover:shadow-md rounded-xl transition overflow-hidden"
+                className="group flex flex-col bg-white shadow-sm hover:shadow-md rounded-xl transition overflow-hidden cursor-pointer"
+                onClick={() => router.push(`/products/${product.id}?variantId=${variant.id}`)}
               >
                 {/* Image area */}
                 <div className="flex justify-center items-center bg-green-50 group-hover:bg-green-100 p-8 transition">
                   <img
-                    src={variant.image}
+                    src={Array.isArray(variant.image) ? variant.image[0] : variant.image as unknown as string}
                     alt={`${product.name} ${variant.weight}`}
                     className="h-36 w-auto object-contain"
+                    onError={(e: any) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1686820740687-426a7b9b2043?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW5zfGVufDF8fHx8MTc2NjYxODMwNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+                    }}
                   />
                 </div>
 
@@ -146,9 +193,9 @@ const products = () => {
                       </span>
                     </div>
                     <button
-                      onClick={() => {
-                        const userId = user ? user.id : 'guest';
-                        addToCart({ productId: product.id, variantId: variant.id, userId });
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product, variant, 1);
                       }}
                       className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 active:scale-95 px-3 py-2 rounded-lg text-white text-sm font-medium transition"
                     >

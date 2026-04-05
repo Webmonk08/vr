@@ -52,7 +52,12 @@ export function ProductCard({ product, onSelect, onDelete }: ProductCardProps) {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Price:</span>
-              <span className="text-green-700 font-medium">${variants[0].price.toFixed(2)}</span>
+              <div className="flex items-center gap-2">
+                {variants[0].originalPrice && variants[0].originalPrice !== variants[0].price && (
+                  <span className="text-gray-400 line-through text-xs">${variants[0].originalPrice.toFixed(2)}</span>
+                )}
+                <span className="text-green-700 font-medium">${variants[0].price.toFixed(2)}</span>
+              </div>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Stock:</span>

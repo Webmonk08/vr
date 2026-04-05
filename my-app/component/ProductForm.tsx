@@ -17,17 +17,21 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         weight: '5kg',
         shortDescription: '',
         description: '',
-        image: '',
+        image: [],
         storageUnitId: null,
         stock: 0,
         price: 0,
-        isdefault: false
+        originalPrice: 0,
+        isdefault: false,
+        category: '',
+        features: []
       }];
     }
     return variants.map(v => ({
       ...v,
       weight: typeof v.weight === 'string' ? v.weight.replace(/\s+/g, '') : v.weight,
-      image: Array.isArray(v.image) ? v.image[0] || '' : v.image
+      image: Array.isArray(v.image) ? v.image : (v.image ? [v.image] : []),
+      originalPrice: v.originalPrice || v.price
     }));
   };
 
@@ -65,16 +69,27 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     (formData['variants'])
   };
 
-  const handleImageUpload = async (index: number, file: File) => {
+  const handleImageUpload = async (index: number, files: FileList | null) => {
+    if (!files) return;
+    
     try {
       setIsUploading(prev => ({ ...prev, [index]: true }));
-      const imageUrl = await ProductService.uploadImage(file);
-      handleVariantChange(index, 'image', imageUrl);
+      const uploadPromises = Array.from(files).map(file => ProductService.uploadImage(file));
+      const newImageUrls = await Promise.all(uploadPromises);
+      
+      const currentImages = formData.variants[index].image || [];
+      handleVariantChange(index, 'image', [...currentImages, ...newImageUrls]);
     } catch (error) {
-      alert('Failed to upload image. Please try again.');
+      alert('Failed to upload one or more images. Please try again.');
     } finally {
       setIsUploading(prev => ({ ...prev, [index]: false }));
     }
+  };
+
+  const removeImage = (variantIndex: number, imageIndex: number) => {
+    const currentImages = [...(formData.variants[variantIndex].image || [])];
+    currentImages.splice(imageIndex, 1);
+    handleVariantChange(variantIndex, 'image', currentImages);
   };
 
   const addVariant = () => {
@@ -87,10 +102,13 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           weight: '5kg',
           shortDescription: '',
           description: '',
-          image: '',
+          image: [],
           stock: 0,
           price: 0,
-          isdefault: false
+          originalPrice: 0,
+          isdefault: false,
+          category: '',
+          features: []
         }
       ]
     });
@@ -114,14 +132,21 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     for (let i = 0; i < formData.variants.length; i++) {
       const variant = formData.variants[i];
-      if (!variant.shortDescription || !variant.description || !variant.image || variant.stock <= 0 || variant.price <= 0) {
-        alert(`Please complete all fields for variant ${i + 1}`);
+      if (!variant.shortDescription || !variant.description || !variant.image || variant.image.length === 0 || variant.stock <= 0 || variant.price <= 0 || !variant.category) {
+        alert(`Please complete all fields for variant ${i + 1} (including at least one image)`);
+        return;
+      }
+      if (!variant.features || variant.features.length === 0 || !variant.features[0].trim()) {
+        alert(`Please add at least one feature for variant ${i + 1}`);
         return;
       }
     }
 
     onSubmit(formData);
   };
+
+  // ... (rest of the component up to image upload UI)
+  console.log("FormData", formData)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -225,23 +250,44 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   </div>
                 </div>
 
-                {/* Price */}
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">
-                    Price ($) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={variant.price}
-                      onChange={(e) => handleVariantChange(index, 'price', parseFloat(e.target.value))}
-                      placeholder="0.00"
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
-                      required
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Price */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-2">
+                      Price ($) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variant.price}
+                        onChange={(e) => handleVariantChange(index, 'price', parseFloat(e.target.value))}
+                        placeholder="0.00"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Original Price */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-2">
+                      Original Price ($)
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variant.originalPrice || variant.price}
+                        onChange={(e) => handleVariantChange(index, 'originalPrice', parseFloat(e.target.value))}
+                        placeholder="0.00"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -303,19 +349,62 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   </p>
                 </div>
 
+                {/* Category */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-700 mb-2">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Tag className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={variant.category || ''}
+                      onChange={(e) => handleVariantChange(index, 'category', e.target.value)}
+                      placeholder="e.g., Premium Rice, Organic"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-700 mb-2">
+                    Features (comma-separated) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <FileText className="w-4 h-4 text-gray-400 absolute left-4 top-4" />
+                    <textarea
+                      value={(variant.features || []).join(', ')}
+                      onChange={(e) => {
+                         const featuresList = e.target.value.split(',').map(f => f.trim()).filter(f => f);
+                         handleVariantChange(index, 'features', featuresList);
+                      }}
+                      placeholder="e.g., 100% Certified Organic, Non-GMO Verified, Gluten-Free"
+                      rows={3}
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-green-700 focus:outline-none resize-none"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-4">
+                    Enter features separated by commas
+                  </p>
+                </div>
+
                 {/* Image Upload */}
                 <div className="md:col-span-2">
                   <label className="block text-sm text-gray-700 mb-2">
-                    Product Image <span className="text-red-500">*</span>
+                    Product Images <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-col gap-4">
                     <div className="relative group">
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(index, file);
+                          const files = e.target.files;
+                          if (files) handleImageUpload(index, files);
                         }}
                         className="hidden"
                         id={`image-upload-${index}`}
@@ -335,29 +424,31 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                           <div className="flex flex-col items-center gap-2">
                             <Upload className="w-8 h-8 text-gray-400 group-hover:text-green-600" />
                             <span className="text-sm text-gray-500">Click to upload or drag and drop</span>
-                            <span className="text-xs text-gray-400">PNG, JPG, WEBP up to 5MB</span>
+                            <span className="text-xs text-gray-400">PNG, JPG, WEBP up to 5MB (Multiple allowed)</span>
                           </div>
                         )}
                       </label>
                     </div>
 
-                    {variant.image && (
-                      <div className="relative w-32 h-32">
-                        <img
-                          src={variant.image}
-                          alt="Preview"
-                          className="w-full h-full object-cover rounded-xl border-2 border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleVariantChange(index, 'image', '')}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
-                          title="Remove image"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                      {variant.image && Array.isArray(variant.image) && variant.image.map((imgUrl, imgIndex) => (
+                        <div key={imgIndex} className="relative aspect-square">
+                          <img
+                            src={imgUrl}
+                            alt={`Preview ${imgIndex + 1}`}
+                            className="w-full h-full object-cover rounded-xl border-2 border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index, imgIndex)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition shadow-sm"
+                            title="Remove image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -424,7 +515,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     image: '',
                     stock: 0,
                     price: 0,
-                    isdefault: false
+                    isdefault: false,
+                    category: '',
+                    features: []
                   }
                 ]
               });
