@@ -118,7 +118,7 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
               {product.originalPrice && product.originalPrice >= product.price && (
                 <span className="text-xl text-gray-400 line-through">${product.originalPrice}</span>
               )}
-              {product.originalPrice && product.originalPrice < product.price && (
+              {product.originalPrice && product.originalPrice > product.price && (
                 <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-sm">
                   Save ${(product.originalPrice - product.price).toFixed(2)}
                 </span>
