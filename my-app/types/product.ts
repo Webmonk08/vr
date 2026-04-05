@@ -1,5 +1,6 @@
 export interface ProductVariant {
   id: number;
+  product_id: number;
   price: number;
   originalPrice: number;
   weight: string;

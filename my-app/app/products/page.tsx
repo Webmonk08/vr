@@ -9,10 +9,10 @@ import { Product, ProductVariant } from '@/types/product';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LoadingPage from '@/component/loadingPage';
 import { ErrorPage } from '@/component/error-page';
-import { ProductPage } from '@/component/ProductDetailsPage';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
+import { useRouter } from 'next/navigation';
 
 const products = () => {
   const { user, role } = useAuthStore();
@@ -28,6 +28,7 @@ const products = () => {
 
   const categories = ['All', ...Array.from(new Set(products.flatMap(p => p.variants.map(v => v.category)).filter(Boolean)))];
 
+  const router = useRouter();
   const { addToCart: guestAddToCart } = useCartStore();
 
   const { mutate: addCartMutation } = useMutation({
@@ -71,29 +72,8 @@ const products = () => {
       .map(variant => ({ product, variant }))
   );
 
-  const [viewingItem, setViewingItem] = useState<{product: Product, variant: ProductVariant} | null>(null);
-
   if (isLoading) return <LoadingPage />;
   if (isError) return <ErrorPage errorType="general" message={error?.message} />;
-
-  if (viewingItem) {
-    return (
-      <ProductPage 
-        product={viewingItem.product} 
-        selectedVariant={viewingItem.variant} 
-        onNavigate={(page) => {
-           if (page === 'home' || page === 'products') {
-               setViewingItem(null);
-           } else if (page === 'cart') {
-               window.location.href = '/cart'; // assuming cart route
-           }
-        }} 
-        onAddToCart={(item: any) => {
-            handleAddToCart(viewingItem.product, viewingItem.variant, item.quantity || 1);
-        }} 
-      />
-    );
-  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -184,7 +164,7 @@ const products = () => {
               <div
                 key={`${product.id}-${variant.id}`}
                 className="group flex flex-col bg-white shadow-sm hover:shadow-md rounded-xl transition overflow-hidden cursor-pointer"
-                onClick={() => setViewingItem({ product, variant })}
+                onClick={() => router.push(`/products/${product.id}?variantId=${variant.id}`)}
               >
                 {/* Image area */}
                 <div className="flex justify-center items-center bg-green-50 group-hover:bg-green-100 p-8 transition">

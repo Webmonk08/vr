@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Star, ShoppingCart, Minus, Plus, Truck, ShieldCheck, Award, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ProductService } from '@/services/products.service';
+import { useRouter } from 'next/navigation';
 
 import { Product, ProductVariant } from '@/types/product';
 
@@ -23,6 +24,7 @@ interface ProductPageProps {
 export function ProductPage({ product: productItem, selectedVariant, onNavigate, onAddToCart }: ProductPageProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const router = useRouter();
 
   const { data: relatedVariants, isLoading: isLoadingRelated } = useQuery({
     queryKey: ['related-products', selectedVariant.id],
@@ -237,7 +239,7 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
                 <div 
                   key={`${variant.id}-${idx}`} 
                   className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition group cursor-pointer"
-                  onClick={() => onNavigate('products')} 
+                  onClick={() => router.push(`/products/${variant.product_id}?variantId=${variant.id}`)} 
                 >
                   <div className="overflow-hidden">
                     <ImageWithFallback 

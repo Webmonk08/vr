@@ -42,6 +42,7 @@ type Product struct {
 
 type ProductVariant struct {
 	ID               int      `json:"id"`
+	ProductID        int      `json:"product_id"`
 	Price            float64  `json:"price"`
 	OriginalPrice    float64  `json:"originalPrice"`
 	Weight           string   `json:"weight"`

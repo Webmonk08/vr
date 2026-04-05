@@ -13,6 +13,15 @@ export class ProductService {
     }
   }
 
+  static async getById(id: number): Promise<Product> {
+    try {
+      const data = await apiClient.get<Product>(`/api/products/get/${id}`);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async create(product: Product): Promise<Product> {
     try {
       const payload = {

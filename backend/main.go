@@ -122,6 +122,21 @@ func main() {
 		c.JSON(http.StatusOK, products)
 	})
 
+	r.GET("/api/products/get/:id", func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			handleError(c, types.BadRequest("Invalid product ID"))
+			return
+		}
+		product, err := service.GetProductByID(id)
+		if err != nil {
+			handleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, product)
+	})
+
 	r.GET("/api/products/related/:variantId", func(c *gin.Context) {
 		idStr := c.Param("variantId")
 		id, err := strconv.Atoi(idStr)

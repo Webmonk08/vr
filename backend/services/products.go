@@ -30,30 +30,51 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 
 	var products []types.Product
 	for _, p := range dbProducts {
-		var variants []types.ProductVariant
-		for _, v := range p.Variants {
-			variants = append(variants, types.ProductVariant{
-				ID:               v.ID,
-				Price:            v.Price,
-				OriginalPrice:    v.OriginalPrice,
-				Weight:           fmt.Sprintf("%g %s", v.WeightValue, v.WeightUnit),
-				Stock:            v.Stock,
-				ShortDescription: v.Description,
-				Description:      v.LongDescription,
-				Image:            v.Image,
-				Isdefault:        v.Isdefault,
-				Category:         v.Category,
-				Features:         v.Features,
-			})
-		}
-		products = append(products, types.Product{
-			ID:       p.ID,
-			Name:     p.Name,
-			Variants: variants,
+		products = append(products, s.mapDBProductToProduct(p))
+	}
+	return products, nil
+}
+
+func (s *Service) GetProductByID(id int) (*types.Product, error) {
+	var dbProduct types.DBProduct
+
+	_, err := s.client.From("products").
+		Select("*, product_variants(*)", "exact", false).
+		Eq("id", fmt.Sprintf("%d", id)).
+		Single().
+		ExecuteTo(&dbProduct)
+
+	if err != nil {
+		return nil, types.InternalServerError("Failed to fetch product")
+	}
+
+	product := s.mapDBProductToProduct(dbProduct)
+	return &product, nil
+}
+
+func (s *Service) mapDBProductToProduct(p types.DBProduct) types.Product {
+	var variants []types.ProductVariant
+	for _, v := range p.Variants {
+		variants = append(variants, types.ProductVariant{
+			ID:               v.ID,
+			ProductID:        v.ProductID,
+			Price:            v.Price,
+			OriginalPrice:    v.OriginalPrice,
+			Weight:           fmt.Sprintf("%g %s", v.WeightValue, v.WeightUnit),
+			Stock:            v.Stock,
+			ShortDescription: v.Description,
+			Description:      v.LongDescription,
+			Image:            v.Image,
+			Isdefault:        v.Isdefault,
+			Category:         v.Category,
+			Features:         v.Features,
 		})
 	}
-	fmt.Println("products", products)
-	return products, nil
+	return types.Product{
+		ID:       p.ID,
+		Name:     p.Name,
+		Variants: variants,
+	}
 }
 
 func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
