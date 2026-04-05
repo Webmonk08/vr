@@ -164,6 +164,7 @@ func (s *Service) UpdateUser(userID string, req types.UpdateUserRequest) (*types
 func (s *Service) DeleteUser(userID string) error {
 	_, _, err := s.client.From("users").Delete("", "").Eq("id", userID).Execute()
 	if err != nil {
+		fmt.Println(err)
 		return types.InternalServerError("Failed to delete user")
 	}
 	return nil

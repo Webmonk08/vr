@@ -41,6 +41,8 @@ func (s *Service) GetProducts() ([]types.Product, error) {
 				Description:      v.LongDescription,
 				Image:            v.Image,
 				Isdefault:        v.Isdefault,
+				Category:         v.Category,
+				Features:         v.Features,
 			})
 		}
 		products = append(products, types.Product{
@@ -73,6 +75,8 @@ func (s *Service) CreateProduct(product types.Product) (*types.Product, error) {
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
+			"category":         v.Category,
+			"features":         v.Features,
 		})
 	}
 
@@ -119,6 +123,8 @@ func (s *Service) UpdateProduct(id int, data types.Product) (*types.Product, err
 			"long_description": v.Description,
 			"image":            v.Image,
 			"isdefault":        v.Isdefault,
+			"category":         v.Category,
+			"features":         v.Features,
 		}
 
 		if v.ID != 0 {

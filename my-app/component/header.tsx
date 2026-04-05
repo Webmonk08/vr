@@ -4,10 +4,20 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useQuery } from '@tanstack/react-query';
+import { CartService } from '@/services/cart.service';
 const Header = () => {
-  const { getTotalItems } = useCartStore();
-  const totalItems = getTotalItems();
   const { user, role } = useAuthStore()
+  const { getTotalItems } = useCartStore();
+  const guestItemCount = getTotalItems();
+
+  const { data: userCart } = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => CartService.getCart(user?.id),
+    enabled: !!user,
+  });
+
+  const totalItems = user ? (userCart?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0) : guestItemCount;
 
   const currPath = usePathname()
 

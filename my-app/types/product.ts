@@ -6,7 +6,9 @@ export interface ProductVariant {
   shortDescription: string;
   description: string;
   image: string;
-  isdefault: boolean
+  isdefault: boolean;
+  category: string;
+  features: string[];
 }
 
 export interface Product {

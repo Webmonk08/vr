@@ -20,6 +20,8 @@ type DBProductVariant struct {
 	Image           []string `json:"image"`
 	Isdefault       bool     `json:"isdefault"`
 	Stock           int      `json:"stock"`
+	Category        string   `json:"category"`
+	Features        []string `json:"features"`
 }
 
 type DBCartItem struct {
@@ -46,6 +48,8 @@ type ProductVariant struct {
 	Description      string   `json:"description"`
 	Image            []string `json:"image"`
 	Isdefault        bool     `json:"isdefault"`
+	Category         string   `json:"category"`
+	Features         []string `json:"features"`
 }
 type CartProduct struct {
 	ID   int    `json:"id"`
@@ -64,11 +68,12 @@ type AddToCartRequest struct {
 	ProductID int    `json:"product_id"`
 	VariantID int    `json:"variant_id"`
 	UserID    string `json:"user_id"`
+	Quantity  int    `json:"quantity"`
 }
 
 type RemoveFromCartRequest struct {
 	CartID           int64  `json:"cart_id"`
-	ProductID       int    `json:"product_id"`
+	ProductID        int    `json:"product_id"`
 	ProductVariantID int    `json:"product_variant_id"`
 	UserID           string `json:"user_id"`
 }

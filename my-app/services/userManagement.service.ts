@@ -80,6 +80,7 @@ export class UserManagementService {
 
   static async delete(id: string): Promise<void> {
     try {
+      console.log("req recieved")
       await apiClient.delete(`/api/users/delete/${id}`);
       toast.success('User deleted successfully');
     } catch (error) {

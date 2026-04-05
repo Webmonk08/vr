@@ -39,7 +39,7 @@ const UserManagementPage = () => {
       setLoading(true);
       setError(null)
       const data = await UserManagementService.getAll();
-      setUsers(data || []);
+      setUsers(data.filter((user) => user.role !== ROLES.CUSTOMER) || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users');
     } finally {
@@ -73,7 +73,6 @@ const UserManagementPage = () => {
     if (!editingUser) return;
     try {
       setActionLoading(true);
-      console.log("Gonna Update teh user" , editPayload)
       await UserManagementService.update(editingUser.id, editPayload);
       setShowEditModal(false);
       setEditingUser(null);

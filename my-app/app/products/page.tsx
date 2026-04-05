@@ -5,11 +5,14 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ProductService } from '@/services/products.service';
 import { CartService } from '@/services/cart.service';
-import { Product } from '@/types/product';
+import { Product, ProductVariant } from '@/types/product';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LoadingPage from '@/component/loadingPage';
 import { ErrorPage } from '@/component/error-page';
+import { ProductPage } from '@/component/ProductDetailsPage';
 import Link from 'next/link';
+import { useCartStore } from '@/store/useCartStore';
+import { toast } from '@/store/useToastStore';
 
 const products = () => {
   const { user, role } = useAuthStore();
@@ -22,13 +25,28 @@ const products = () => {
   });
   const products = data || [];
 
-  const { mutate: addToCart } = useMutation({
+  const { addToCart: guestAddToCart } = useCartStore();
+
+  const { mutate: addCartMutation } = useMutation({
     mutationFn: ({ productId, variantId, userId }: { productId: number; variantId: number; userId: string }) =>
       CartService.addItem(productId, variantId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success("Successfully added to cart!");
     },
+    onError: () => {
+      toast.error("Failed to add to cart.");
+    }
   });
+
+  const handleAddToCart = (productParam: Product, variantParam: ProductVariant, quantity = 1) => {
+    if (user) {
+      addCartMutation({ productId: productParam.id, variantId: variantParam.id, userId: user.id });
+    } else {
+      guestAddToCart({ product: productParam, variant: variantParam, quantity, id: Date.now() } as any);
+      toast.success("Successfully added to cart!");
+    }
+  };
 
   useEffect(() => {
     if (isError) {
@@ -47,8 +65,29 @@ const products = () => {
     product.variants.map(variant => ({ product, variant }))
   );
 
+  const [viewingItem, setViewingItem] = useState<{product: Product, variant: ProductVariant} | null>(null);
+
   if (isLoading) return <LoadingPage />;
   if (isError) return <ErrorPage errorType="general" message={error?.message} />;
+
+  if (viewingItem) {
+    return (
+      <ProductPage 
+        product={viewingItem.product} 
+        selectedVariant={viewingItem.variant} 
+        onNavigate={(page) => {
+           if (page === 'home' || page === 'products') {
+               setViewingItem(null);
+           } else if (page === 'cart') {
+               window.location.href = '/cart'; // assuming cart route
+           }
+        }} 
+        onAddToCart={(item) => {
+            handleAddToCart(viewingItem.product, viewingItem.variant, 1);
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -120,7 +159,8 @@ const products = () => {
             {displayItems.map(({ product, variant }) => (
               <div
                 key={`${product.id}-${variant.id}`}
-                className="group flex flex-col bg-white shadow-sm hover:shadow-md rounded-xl transition overflow-hidden"
+                className="group flex flex-col bg-white shadow-sm hover:shadow-md rounded-xl transition overflow-hidden cursor-pointer"
+                onClick={() => setViewingItem({ product, variant })}
               >
                 {/* Image area */}
                 <div className="flex justify-center items-center bg-green-50 group-hover:bg-green-100 p-8 transition">
@@ -146,9 +186,9 @@ const products = () => {
                       </span>
                     </div>
                     <button
-                      onClick={() => {
-                        const userId = user ? user.id : 'guest';
-                        addToCart({ productId: product.id, variantId: variant.id, userId });
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product, variant, 1);
                       }}
                       className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 active:scale-95 px-3 py-2 rounded-lg text-white text-sm font-medium transition"
                     >

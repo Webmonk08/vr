@@ -21,7 +21,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         storageUnitId: null,
         stock: 0,
         price: 0,
-        isdefault: false
+        isdefault: false,
+        category: '',
+        features: []
       }];
     }
     return variants.map(v => ({
@@ -91,7 +93,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           image: '',
           stock: 0,
           price: 0,
-          isdefault: false
+          isdefault: false,
+          category: '',
+          features: []
         }
       ]
     });
@@ -115,8 +119,12 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     for (let i = 0; i < formData.variants.length; i++) {
       const variant = formData.variants[i];
-      if (!variant.shortDescription || !variant.description || !variant.image || variant.stock <= 0 || variant.price <= 0) {
+      if (!variant.shortDescription || !variant.description || !variant.image || variant.stock <= 0 || variant.price <= 0 || !variant.category) {
         alert(`Please complete all fields for variant ${i + 1}`);
+        return;
+      }
+      if (!variant.features || variant.features.length === 0 || !variant.features[0].trim()) {
+        alert(`Please add at least one feature for variant ${i + 1}`);
         return;
       }
     }
@@ -305,6 +313,48 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   </p>
                 </div>
 
+                {/* Category */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-700 mb-2">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Tag className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={variant.category || ''}
+                      onChange={(e) => handleVariantChange(index, 'category', e.target.value)}
+                      placeholder="e.g., Premium Rice, Organic"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-700 mb-2">
+                    Features (comma-separated) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <FileText className="w-4 h-4 text-gray-400 absolute left-4 top-4" />
+                    <textarea
+                      value={(variant.features || []).join(', ')}
+                      onChange={(e) => {
+                         const featuresList = e.target.value.split(',').map(f => f.trim()).filter(f => f);
+                         handleVariantChange(index, 'features', featuresList);
+                      }}
+                      placeholder="e.g., 100% Certified Organic, Non-GMO Verified, Gluten-Free"
+                      rows={3}
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-green-700 focus:outline-none resize-none"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-4">
+                    Enter features separated by commas
+                  </p>
+                </div>
+
                 {/* Image Upload */}
                 <div className="md:col-span-2">
                   <label className="block text-sm text-gray-700 mb-2">
@@ -426,7 +476,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     image: '',
                     stock: 0,
                     price: 0,
-                    isdefault: false
+                    isdefault: false,
+                    category: '',
+                    features: []
                   }
                 ]
               });
