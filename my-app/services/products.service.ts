@@ -24,14 +24,7 @@ export class ProductService {
 
   static async create(product: Product): Promise<Product> {
     try {
-      const payload = {
-        ...product,
-        variants: product.variants.map(v => ({
-          ...v,
-          image: typeof v.image === 'string' ? [v.image] : v.image
-        }))
-      };
-      const data = await apiClient.post<Product>('/api/products/create', payload);
+      const data = await apiClient.post<Product>('/api/products/create', product);
       return data;
     } catch (error) {
       throw error;
@@ -42,13 +35,7 @@ export class ProductService {
     try {
       const payload = {
         id: id,
-        data: {
-          ...product,
-          variants: product.variants.map(v => ({
-            ...v,
-            image: typeof v.image === 'string' ? [v.image] : v.image
-          }))
-        }
+        data: product
       };
       const data = await apiClient.post<Product>(`/api/products/update/${id}`, payload);
       return data;

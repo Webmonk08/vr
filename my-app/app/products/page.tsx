@@ -169,9 +169,12 @@ const products = () => {
                 {/* Image area */}
                 <div className="flex justify-center items-center bg-green-50 group-hover:bg-green-100 p-8 transition">
                   <img
-                    src={variant.image}
+                    src={Array.isArray(variant.image) ? variant.image[0] : variant.image as unknown as string}
                     alt={`${product.name} ${variant.weight}`}
                     className="h-36 w-auto object-contain"
+                    onError={(e: any) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1686820740687-426a7b9b2043?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW5zfGVufDF8fHx8MTc2NjYxODMwNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+                    }}
                   />
                 </div>
 
