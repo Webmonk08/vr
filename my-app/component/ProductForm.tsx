@@ -24,7 +24,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         originalPrice: 0,
         isdefault: false,
         category: '',
-        features: []
+        features: [],
+        product_id: product?.id || 0
       }];
     }
     return variants.map(v => ({
@@ -108,7 +109,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           originalPrice: 0,
           isdefault: false,
           category: '',
-          features: []
+          features: [],
+          product_id: formData.id
         }
       ]
     });
@@ -512,12 +514,14 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     weight: '5kg',
                     shortDescription: '',
                     description: '',
-                    image: '',
+                    image: [],
                     stock: 0,
                     price: 0,
+                    originalPrice: 0,
                     isdefault: false,
                     category: '',
-                    features: []
+                    features: [],
+                    product_id: 0
                   }
                 ]
               });

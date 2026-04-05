@@ -78,7 +78,7 @@ export function ConfirmationModal({ formData, onConfirm, onCancel }: Confirmatio
                     <div className="md:col-span-2">
                       <p className="text-sm text-gray-600 mb-2">Product Image</p>
                       <img
-                        src={variant.image}
+                        src={Array.isArray(variant.image) ? variant.image[0] : variant.image as unknown as string}
                         alt={formData.name}
                         className="w-full h-48 object-cover rounded-xl border-2 border-gray-200"
                         onError={(e) => {
