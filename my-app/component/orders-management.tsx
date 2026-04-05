@@ -56,7 +56,7 @@ export default function OrdersManagement() {
   const router = useRouter();
   const [orderTab, setOrderTab] = useState<'pending' | 'history'>('pending');
   const [loading, setLoading] = useState(true);
-  
+
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [orderForPrint, setOrderForPrint] = useState<DisplayOrder | null>(null);
@@ -91,7 +91,7 @@ export default function OrdersManagement() {
     try {
       setUpdatingStatus(orderId);
       await OrdersService.updateStatus(orderId, newStatus);
-      setOrders(orders.map(order => 
+      setOrders(orders.map(order =>
         order.id === orderId ? { ...order, status: newStatus as DisplayOrder['status'] } : order
       ));
     } catch (error) {
@@ -123,10 +123,6 @@ export default function OrdersManagement() {
   };
 
   const handlePrint = () => {
-    console.log('Printing bill for order:', orderForPrint?.orderNumber);
-    console.log('Storage unit assignments:', selectedStorageUnits);
-    console.log('DUMMY PRINT: Sending bill to printer...');
-    console.log('Bill generated successfully!');
     setShowPrintModal(false);
   };
 
@@ -478,7 +474,7 @@ export default function OrdersManagement() {
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="mb-4 p-4 bg-gray-50 rounded-xl">
                 <p className="text-sm text-gray-600">Order Number</p>
@@ -499,7 +495,7 @@ export default function OrdersManagement() {
                         <p className="text-sm font-medium text-gray-900">{product.name}</p>
                         <p className="text-xs text-gray-500">Qty: {product.quantity}</p>
                       </div>
-                      
+
                     </div>
                   ))}
                 </div>

@@ -8,8 +8,8 @@ interface ProductFormProps {
   onSubmit: (data: Product) => void;
 }
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
-  const [isUploading, setIsUploading] = useState<{[key: number]: boolean}>({});
-  console.log("product", product)
+  const [isUploading, setIsUploading] = useState<{ [key: number]: boolean }>({});
+
   const formatVariants = (variants?: ProductVariant[] | any[]) => {
     if (!variants || variants.length === 0) {
       return [{
@@ -41,6 +41,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     variants: formatVariants(product?.variants)
   });
 
+
+
   useEffect(() => {
     if (product) {
       setFormData({
@@ -59,10 +61,12 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   };
 
   const handleVariantChange = (index: number, field: keyof ProductVariant, value: any) => {
-    const updatedVariants = formData.variants.map((v, i) => 
+    
+    const updatedVariants = formData.variants.map((v, i) =>
       i === index ? { ...v, [field]: value } : v
     );
     setFormData(prev => ({ ...prev, variants: updatedVariants }));
+    (formData['variants'])
   };
 
   const handleImageUpload = async (index: number, files: FileList | null) => {
@@ -457,7 +461,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     </label>
 
                     <div className="grid grid-cols-1 gap-4">
-                      
+
 
                       {/* Stock Quantity */}
                       <div>

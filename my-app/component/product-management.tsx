@@ -110,7 +110,7 @@ const ProductManagement = () => {
   if (isLoading) {
     return <LoadingPage />;
   }
-  console.log(products)
+  (products)
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
