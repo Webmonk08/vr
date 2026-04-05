@@ -228,7 +228,7 @@ function CheckoutPage() {
                     <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
                       {item.variant?.image ? (
                         <img
-                          src={typeof item.variant.image === 'string' ? item.variant.image : item.variant.image}
+                          src={Array.isArray(item.variant.image) ? item.variant.image[0] : item.variant.image as unknown as string}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />
