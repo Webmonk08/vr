@@ -115,7 +115,7 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
 
             <div className="flex items-baseline gap-3 mb-6">
               <span className="text-4xl text-gray-900">${product.price}</span>
-              {product.originalPrice && product.originalPrice !== product.price && (
+              {product.originalPrice && product.originalPrice >= product.price && (
                 <span className="text-xl text-gray-400 line-through">${product.originalPrice}</span>
               )}
               {product.originalPrice && product.originalPrice !== product.price && (
