@@ -1,14 +1,26 @@
+'use client'
 import { Wheat } from "lucide-react"
 import Link from "next/link"
-const footer = () => {
-  return (
+import { useEffect } from "react"
+import { useCategoryStore } from "@/store/useCategoryStore"
 
-    < footer className="bg-green-900 mt-16 py-12 text-green-200" >
+const Footer = () => {
+  const { categories, fetchCategories } = useCategoryStore()
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  // Use the top 3 categories or default to placeholders if none found yet
+  const displayCategories = categories.length > 0 ? categories.slice(0, 3) : ['Ponni Rice', 'Basmati Rice', 'Samba Rice'];
+
+  return (
+    <footer className="bg-green-900 mt-16 py-12 text-green-200">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="gap-8 grid grid-cols-1 md:grid-cols-4 mb-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <Wheat />
+              <Wheat className="w-6 h-6 text-green-400" />
               <h3 className="font-medium text-white font-georama text-xl">Veerapathra Traders</h3>
             </div>
             <p className="text-sm">Premium rice varieties delivered to your doorstep with care and quality.</p>
@@ -17,9 +29,13 @@ const footer = () => {
             <h4 className="mb-4 font-semibold text-white">Shop</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/products" className="hover:text-white transition">All Products</Link></li>
-              <li><Link href="/products?category=basmati" className="hover:text-white transition">Basmati Rice</Link></li>
-              <li><Link href="/products?category=jasmine" className="hover:text-white transition">Jasmine Rice</Link></li>
-              <li><Link href="/products?category=specialty" className="hover:text-white transition">Specialty Rice</Link></li>
+              {displayCategories.map((category) => (
+                <li key={category}>
+                  <Link href={`/products?category=${encodeURIComponent(category)}`} className="hover:text-white transition">
+                    {category}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
@@ -45,10 +61,11 @@ const footer = () => {
           </div>
         </div>
         <div className="pt-8 border-green-800 border-t text-sm text-center">
-          <p>&copy; 2024 RiceHaven. All rights reserved.</p>
+          <p>&copy; 2024 Veerapathra Traders. All rights reserved.</p>
         </div>
       </div>
-    </footer >
+    </footer>
   )
 }
-export default footer
+
+export default Footer

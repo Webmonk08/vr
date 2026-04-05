@@ -11,20 +11,31 @@ import Link from 'next/link';
 
 
 export default function ProfilePage() {
-  // Mock user data - in a real app, this would come from auth state
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { logout } = useAuthStore();
-  const { user, role } = useAuthStore()
-  const { data: userData, isLoading, isError } = useQuery({
+  const { user, logout } = useAuthStore();
+  
+  // Track if hydration has finished
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    // This will run once on mount, after hydration is done
+    setIsHydrated(true);
+  }, []);
+
+  const { data: userData, isLoading: profileLoading, isError } = useQuery({
     queryKey: ['userProfile', user?.id],
     queryFn: () => getUserProfile(user?.id || ''),
+    enabled: isHydrated && !!user?.id,
   });
-  if (userData) {
-    userData.email = user?.email || ''
-  }
-  const [isEditingDetails, setIsEditingDetails] = useState(false);
 
+  const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ['userOrders', user?.id],
+    queryFn: () => OrdersService.getByUser(user?.id || ''),
+    enabled: isHydrated && !!user?.id,
+  });
+
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [editedData, setEditedData] = useState({
     name: '',
     email: '',
@@ -32,16 +43,28 @@ export default function ProfilePage() {
     address: ''
   });
 
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+
   useEffect(() => {
     if (userData) {
       setEditedData({
         name: userData.name || '',
-        email: userData.email || '',
+        email: user?.email || userData.email || '',
         phone: userData.phone || '',
         address: userData.address || ''
       });
     }
-  }, [userData]);
+  }, [userData, user]);
 
   const updateMutation = useMutation({
     mutationFn: updateUser,
@@ -49,7 +72,7 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       setIsEditingDetails(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       alert('Failed to update details: ' + error.message);
     }
   });
@@ -64,21 +87,9 @@ export default function ProfilePage() {
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setIsChangingPassword(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       alert('Failed to change password: ' + error.message);
     }
-  });
-
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false
   });
 
   const handleUpdateDetails = () => {
@@ -94,7 +105,7 @@ export default function ProfilePage() {
     if (userData) {
       setEditedData({
         name: userData.name || '',
-        email: userData.email || '',
+        email: user?.email || userData.email || '',
         phone: userData.phone || '',
         address: userData.address || ''
       });
@@ -116,18 +127,24 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      alert('Logged out successfully!');
-      logout()
-      router.replace(' / ');
+      logout();
+      router.replace('/');
     }
   };
 
-  if (isLoading) {
+  // Wait for hydration AND for the profile query to finish if user exists
+  if (!isHydrated || (!!user?.id && profileLoading)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
       </div>
     );
+  }
+
+  // If hydrated, not profileLoading, and still no user or no userData, then redirect
+  if (isHydrated && !user?.id) {
+    router.push('/login');
+    return null;
   }
 
   if (isError) {
@@ -136,17 +153,10 @@ export default function ProfilePage() {
     );
   }
 
-  if (!userData && !isLoading) {
+  if (!userData && !profileLoading) {
     router.push('/login');
     return null;
   }
-
-  // Fetch real user orders
-  const { data: userOrders, isLoading: ordersLoading } = useQuery<Order[]>({
-    queryKey: ['userOrders', user?.id],
-    queryFn: () => OrdersService.getByUser(user?.id || ''),
-    enabled: !!user?.id,
-  });
 
   // Compute account overview stats
   const totalOrders = userOrders?.length || 0;
@@ -166,7 +176,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <h1 className="text-3xl mb-2">{userData?.name}</h1>
-              <p className="text-green-100">{userData?.email}</p>
+              <p className="text-green-100">{user?.email || userData?.email}</p>
             </div>
           </div>
         </div>
@@ -218,7 +228,7 @@ export default function ProfilePage() {
                   <label className="block text-sm text-gray-600 mb-2">Email Address</label>
                   <div className="flex items-center gap-3 text-gray-900 bg-gray-50 px-4 py-3 rounded-full">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    <span>{userData?.email}</span>
+                    <span>{user?.email || userData?.email}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 ml-4">Email cannot be changed</p>
                 </div>

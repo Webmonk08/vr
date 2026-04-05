@@ -12,13 +12,24 @@ import { ErrorPage } from '@/component/error-page';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from '@/store/useToastStore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const products = () => {
   const { user, role } = useAuthStore();
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') || 'All';
+  
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const queryClient = useQueryClient();
+
+  // Update selectedCategory if query param changes
+  useEffect(() => {
+    const category = searchParams.get('category');
+    if (category) {
+      setSelectedCategory(category);
+    }
+  }, [searchParams]);
 
   const { data, isLoading, isError, error } = useQuery<Product[], Error>({
     queryKey: ['products'],

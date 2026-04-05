@@ -4,6 +4,11 @@ import { Wheat, ShieldCheck, Truck, Clock, Award, Star, MapPin, Users, ShoppingB
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import image1 from '@/public/mappillai-samba-rice-500x500.webp'
+import image2 from '@/public/premium-rice-500x500.webp'
+import image3 from '@/public/june5-500x500.webp';
+
+
 
 export default function App() {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -82,9 +87,7 @@ export default function App() {
                 <span className="text-green-700">Rice Selection</span>
               </h1>
               <p className="mb-8 text-gray-600 leading-relaxed">
-                Discover the finest selection of premium rice varieties sourced directly from sustainable farms.
-                From fragrant jasmine to authentic basmati, we bring nature's best grains to your table with
-                guaranteed freshness and quality.
+                From the aromatic excellence of Arcadia Dubar Basmati to the traditional staple of Ponni and Samba rice, we offer a diverse selection of high-quality, organic, and locally sourced grains. Whether you are looking for a single pack for a family dinner or a wholesale partner for your retail business, we provide exceptional value and authentic taste in every bag. Explore our collection and experience the perfect grain for every meal.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
@@ -93,9 +96,7 @@ export default function App() {
                 >
                   Shop Now
                 </Link>
-                <button className="hover:bg-green-50 px-8 py-3 border-2 border-green-700 rounded-full text-green-700 transition">
-                  Learn More
-                </button>
+                
               </div>
             </div>
 
@@ -103,18 +104,18 @@ export default function App() {
               <div className="shadow-2xl rounded-3xl overflow-hidden">
                 <img
                   src={[
-                    "https://images.unsplash.com/photo-1686820740687-426a7b9b2043?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW5zfGVufDF8fHx8MTc2NjYxODMwNnww&ixlib=rb-4.1.0&q=80&w=1080",
-                    "https://images.unsplash.com/photo-1586201375761-83865001e31c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
-                    "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
-                    "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080"
-                  ][activeSlide]}
+                    image2,
+                    image1,
+                    image3,
+    
+                  ][activeSlide].src}
                   alt="Premium rice grains"
                   className="w-full h-[500px] object-cover"
                 />
 
                 {/* Previous Button */}
                 <button
-                  onClick={() => setActiveSlide((prev) => (prev === 0 ? 3 : prev - 1))}
+                  onClick={() => setActiveSlide((prev) => (prev === 0 ? 2 : prev - 1))}
                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition"
                   aria-label="Previous slide"
                 >
@@ -125,7 +126,7 @@ export default function App() {
 
                 {/* Next Button */}
                 <button
-                  onClick={() => setActiveSlide((prev) => (prev === 3 ? 0 : prev + 1))}
+                  onClick={() => setActiveSlide((prev) => (prev === 2 ? 0 : prev + 1))}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition"
                   aria-label="Next slide"
                 >
@@ -137,7 +138,7 @@ export default function App() {
 
               {/* Carousel dots */}
               <div className="flex justify-center gap-2 mt-6">
-                {[0, 1, 2, 3].map((index) => (
+                {[0, 1, 2].map((index) => (
                   <button
                     key={index}
                     onClick={() => setActiveSlide(index)}

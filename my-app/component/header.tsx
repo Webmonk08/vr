@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react';
 import { Wheat, ShoppingBag, User } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
@@ -6,15 +7,22 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { CartService } from '@/services/cart.service';
+
 const Header = () => {
   const { user, role } = useAuthStore()
   const { getTotalItems } = useCartStore();
   const guestItemCount = getTotalItems();
 
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const { data: userCart } = useQuery({
     queryKey: ["cart", user?.id],
     queryFn: () => CartService.getCart(user?.id),
-    enabled: !!user,
+    enabled: isHydrated && !!user,
   });
 
   const totalItems = user ? (userCart?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0) : guestItemCount;
@@ -38,7 +46,7 @@ const Header = () => {
 
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/" className="text-gray-700 hover:text-green-700 transition">Home</Link>
-            {role === 'OWNER' || role === "ADMIN" ? <Link href="/addproducts" className="text-gray-700 hover:text-green-700 transition">Add Products</Link>
+            {isHydrated && (role === 'OWNER' || role === "ADMIN") ? <Link href="/addproducts" className="text-gray-700 hover:text-green-700 transition">Add Products</Link>
               : <></>
             }
             <Link href="/products" className="text-gray-700 hover:text-green-700 transition">Products</Link>
@@ -48,28 +56,33 @@ const Header = () => {
             <Link href="/cart" className="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-full transition relative flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />
               Cart
-              {totalItems > 0 && (
+              {isHydrated && totalItems > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
                   {totalItems}
                 </span>
               )}
             </Link>
-            {(!user && currPath !== '/login' && currPath !== '/signup') ? (
-              // Condition is TRUE: Show Login
-              <Link href="/login" className="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-full transition flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Log In
-              </Link>
+            
+            {isHydrated ? (
+              (!user && currPath !== '/login' && currPath !== '/signup') ? (
+                <Link href="/login" className="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-full transition flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Log In
+                </Link>
+              ) : (
+                user && currPath !== '/profile' && (
+                  <Link
+                    href='/profile'
+                    className="w-10 h-10 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition"
+                    title="My Profile"
+                  >
+                    <User className="w-5 h-5 text-green-700" />
+                  </Link>
+                )
+              )
             ) : (
-              // Condition is FALSE (User is logged in): Show Logout
-              user && currPath !== '/profile' && (
-                <Link
-                  href='/profile'
-                  className="w-10 h-10 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition"
-                  title="My Profile"
-                >
-                  <User className="w-5 h-5 text-green-700" />
-                </Link>)
+              /* Skeleton or Placeholder while hydrating to prevent layout shift */
+              <div className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
             )}
           </div>
         </div>
