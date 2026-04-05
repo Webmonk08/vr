@@ -13,6 +13,7 @@ type DBProductVariant struct {
 	ID              int      `json:"id"`
 	ProductID       int      `json:"product_id"`
 	Price           float64  `json:"price"`
+	OriginalPrice   float64  `json:"original_price"`
 	WeightValue     float64  `json:"weight_value"`
 	WeightUnit      string   `json:"weight_unit"`
 	Description     string   `json:"description"`
@@ -42,6 +43,7 @@ type Product struct {
 type ProductVariant struct {
 	ID               int      `json:"id"`
 	Price            float64  `json:"price"`
+	OriginalPrice    float64  `json:"originalPrice"`
 	Weight           string   `json:"weight"`
 	Stock            int      `json:"stock"`
 	ShortDescription string   `json:"shortDescription"`

@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Wheat, Star, ShoppingCart, Minus, Plus, Truck, ShieldCheck, Award } from 'lucide-react';
+import { Star, ShoppingCart, Minus, Plus, Truck, ShieldCheck, Award, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ProductService } from '@/services/products.service';
 
 import { Product, ProductVariant } from '@/types/product';
 
@@ -22,45 +24,26 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
+  const { data: relatedVariants, isLoading: isLoadingRelated } = useQuery({
+    queryKey: ['related-products', selectedVariant.id],
+    queryFn: () => ProductService.getRelated(selectedVariant.id),
+  });
+
   const product = {
     id: productItem.id,
     name: productItem.name,
     price: selectedVariant.price,
-    originalPrice: selectedVariant.price * 1.2,
+    originalPrice: selectedVariant.originalPrice,
     rating: 4.8,
     reviews: 124,
     description: selectedVariant.shortDescription,
     longDescription: selectedVariant.description,
-    images: selectedVariant.image ? [selectedVariant.image] : ['https://images.unsplash.com/photo-1686820740687-426a7b9b2043?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW5zfGVufDF8fHx8MTc2NjYxODMwNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral'],
+    images: selectedVariant.image && selectedVariant.image.length > 0 ? selectedVariant.image : ['https://images.unsplash.com/photo-1686820740687-426a7b9b2043?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW5zfGVufDF8fHx8MTc2NjYxODMwNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral'],
     category: selectedVariant.category || "General",
     weight: selectedVariant.weight,
     features: selectedVariant.features && selectedVariant.features.length > 0 ? selectedVariant.features : ["Premium Quality", "100% Authentic"],
     inStock: selectedVariant.stock > 0
   };
-
-  const relatedProducts = [
-    {
-      id: 2,
-      name: "Premium Basmati Rice",
-      price: 29.99,
-      image: "https://images.unsplash.com/photo-1633945274417-ab205ae69d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiaXJ5YW5pJTIwcmljZXxlbnwxfHx8fDE3NjY1OTc5NzJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      rating: 4.8
-    },
-    {
-      id: 3,
-      name: "Organic Brown Rice",
-      price: 22.99,
-      image: "https://images.unsplash.com/photo-1630914441934-a29bf360934c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmllZCUyMHJpY2UlMjBkaXNofGVufDF8fHx8MTc2NjY1Njk4OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      rating: 4.7
-    },
-    {
-      id: 4,
-      name: "Sushi Rice Premium",
-      price: 26.99,
-      image: "https://images.unsplash.com/photo-1613758235256-43a7bdc21d82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdXNoaSUyMHJpY2V8ZW58MXx8fHwxNzY2NTY0NjM4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      rating: 4.9
-    }
-  ];
 
   const handleAddToCart = () => {
     onAddToCart({
@@ -74,8 +57,6 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
 
   return (
     <div className="min-h-screen bg-gray-50">
-   
-
       {/* Product Detail */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid md:grid-cols-2 gap-12">
@@ -132,10 +113,10 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
 
             <div className="flex items-baseline gap-3 mb-6">
               <span className="text-4xl text-gray-900">${product.price}</span>
-              {product.originalPrice && (
+              {product.originalPrice && product.originalPrice !== product.price && (
                 <span className="text-xl text-gray-400 line-through">${product.originalPrice}</span>
               )}
-              {product.originalPrice && (
+              {product.originalPrice && product.originalPrice !== product.price && (
                 <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-sm">
                   Save ${(product.originalPrice - product.price).toFixed(2)}
                 </span>
@@ -160,7 +141,6 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
                     {product.inStock ? 'In Stock' : 'Out of Stock'}
                   </p>
                 </div>
-               
               </div>
             </div>
 
@@ -236,40 +216,60 @@ export function ProductPage({ product: productItem, selectedVariant, onNavigate,
 
         {/* Related Products */}
         <div className="mt-16">
-          <h2 className="text-3xl mb-8 text-gray-900">You May Also Like</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <div key={relatedProduct.id} className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition group cursor-pointer">
-                <div className="overflow-hidden">
-                  <ImageWithFallback 
-                    src={relatedProduct.image}
-                    alt={relatedProduct.name}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition duration-500"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="mb-2 text-gray-900">{relatedProduct.name}</h3>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={`w-4 h-4 ${i < Math.floor(relatedProduct.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600">{relatedProduct.rating}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl text-gray-900">${relatedProduct.price}</span>
-                    <button className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-full transition">
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl text-gray-900">You May Also Like</h2>
+            <button 
+              onClick={() => onNavigate('products')}
+              className="text-green-700 hover:text-green-800 font-medium flex items-center gap-2"
+            >
+              Show More
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
+
+          {isLoadingRelated ? (
+            <div className="flex justify-center py-12">
+               <Loader2 className="w-8 h-8 animate-spin text-green-700" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-6">
+              {relatedVariants?.map((variant, idx) => (
+                <div 
+                  key={`${variant.id}-${idx}`} 
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition group cursor-pointer"
+                  onClick={() => onNavigate('products')} 
+                >
+                  <div className="overflow-hidden">
+                    <ImageWithFallback 
+                      src={Array.isArray(variant.image) ? variant.image[0] : variant.image}
+                      alt={variant.shortDescription}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition duration-500"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="mb-2 text-gray-900">{variant.category} - {variant.weight}</h3>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`w-4 h-4 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600">4.5</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl text-gray-900">${variant.price}</span>
+                      <button className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-full transition">
+                        View
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

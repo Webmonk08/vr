@@ -12,12 +12,13 @@ export class CartService {
     }
   }
 
-  static async addItem(productId: number, variantId: number, userId: string): Promise<CartItem> {
+  static async addItem(productId: number, variantId: number, userId: string, quantity: number = 1): Promise<CartItem> {
     try {
       const data = await apiClient.post<CartItem>('/api/cart/add', {
         product_id: productId,
         variant_id: variantId,
         user_id: userId,
+        quantity: quantity
       });
       return data;
     } catch (error) {

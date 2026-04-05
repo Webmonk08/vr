@@ -116,9 +116,14 @@ func (s *Service) AddToCart(req types.AddToCartRequest) (*types.CartItem, error)
 
 	var cartItemID int64
 
+	addQty := req.Quantity
+	if addQty <= 0 {
+		addQty = 1
+	}
+
 	if len(existingItems) > 0 {
 		cartItemID = existingItems[0].ID
-		finalQty := existingItems[0].Quantity + 1
+		finalQty := existingItems[0].Quantity + addQty
 
 		_, _, err = s.client.From("cart_items").Update(map[string]interface{}{
 			"quantity": finalQty,
@@ -127,7 +132,7 @@ func (s *Service) AddToCart(req types.AddToCartRequest) (*types.CartItem, error)
 			return nil, types.InternalServerError("Failed to update cart item quantity")
 		}
 	} else {
-		qty := 1
+		qty := addQty
 		var newItems []struct {
 			ID int64 `json:"id"`
 		}

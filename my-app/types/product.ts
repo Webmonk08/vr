@@ -1,11 +1,12 @@
 export interface ProductVariant {
   id: number;
   price: number;
+  originalPrice: number;
   weight: string;
   stock: number;
   shortDescription: string;
   description: string;
-  image: string;
+  image: string[];
   isdefault: boolean;
   category: string;
   features: string[];

@@ -1,4 +1,4 @@
-import { Product } from "@/types/product";
+import { Product,ProductVariant } from "@/types/product";
 import { apiClient, ApiException } from "@/lib/api-client";
 
 export class ProductService {
@@ -6,6 +6,7 @@ export class ProductService {
   static async getAll(): Promise<Product[]> {
     try {
       const data = await apiClient.get<Product[]>('/api/products/getAll');
+      console.log("data", data)
       return data;
     } catch (error) {
       throw error;
@@ -50,6 +51,15 @@ export class ProductService {
   static async deleteProduct(id: number): Promise<void> {
     try {
       await apiClient.delete(`/api/products/delete/${id}`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getRelated(variantId: number): Promise<ProductVariant[]> {
+    try {
+      const data = await apiClient.get<ProductVariant[]>(`/api/products/related/${variantId}`);
+      return data;
     } catch (error) {
       throw error;
     }

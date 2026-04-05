@@ -17,6 +17,7 @@ import { toast } from '@/store/useToastStore';
 const products = () => {
   const { user, role } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, error } = useQuery<Product[], Error>({
@@ -25,11 +26,13 @@ const products = () => {
   });
   const products = data || [];
 
+  const categories = ['All', ...Array.from(new Set(products.flatMap(p => p.variants.map(v => v.category)).filter(Boolean)))];
+
   const { addToCart: guestAddToCart } = useCartStore();
 
   const { mutate: addCartMutation } = useMutation({
-    mutationFn: ({ productId, variantId, userId }: { productId: number; variantId: number; userId: string }) =>
-      CartService.addItem(productId, variantId, userId),
+    mutationFn: ({ productId, variantId, userId, quantity }: { productId: number; variantId: number; userId: string, quantity: number }) =>
+      CartService.addItem(productId, variantId, userId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success("Successfully added to cart!");
@@ -41,7 +44,7 @@ const products = () => {
 
   const handleAddToCart = (productParam: Product, variantParam: ProductVariant, quantity = 1) => {
     if (user) {
-      addCartMutation({ productId: productParam.id, variantId: variantParam.id, userId: user.id });
+      addCartMutation({ productId: productParam.id, variantId: variantParam.id, userId: user.id, quantity });
     } else {
       guestAddToCart({ product: productParam, variant: variantParam, quantity, id: Date.now() } as any);
       toast.success("Successfully added to cart!");
@@ -58,11 +61,14 @@ const products = () => {
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       Array.isArray(product.variants) &&
-      product.variants.length > 0
+      product.variants.length > 0 &&
+      (selectedCategory === 'All' || product.variants.some(v => v.category === selectedCategory))
   );
 
   const displayItems = filteredProducts.flatMap(product => 
-    product.variants.map(variant => ({ product, variant }))
+    product.variants
+      .filter(v => selectedCategory === 'All' || v.category === selectedCategory)
+      .map(variant => ({ product, variant }))
   );
 
   const [viewingItem, setViewingItem] = useState<{product: Product, variant: ProductVariant} | null>(null);
@@ -82,8 +88,8 @@ const products = () => {
                window.location.href = '/cart'; // assuming cart route
            }
         }} 
-        onAddToCart={(item) => {
-            handleAddToCart(viewingItem.product, viewingItem.variant, 1);
+        onAddToCart={(item: any) => {
+            handleAddToCart(viewingItem.product, viewingItem.variant, item.quantity || 1);
         }} 
       />
     );
@@ -137,20 +143,38 @@ const products = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
 
         {/* Toolbar row */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-          <p className="text-gray-600 text-sm sm:text-base">
-            Showing <span className="font-semibold text-gray-900">{displayItems.length}</span>{' '}
-            {displayItems.length === 1 ? 'product' : 'products'}
-          </p>
-          <select
-            title="sort"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 text-sm bg-white"
-          >
-            <option>Sort by: Featured</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Rating: High to Low</option>
-          </select>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
+          <div className="flex flex-wrap items-center gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  selectedCategory === category
+                    ? 'bg-green-700 text-white shadow-md'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <p className="text-gray-600 text-sm whitespace-nowrap">
+              <span className="font-semibold text-gray-900">{displayItems.length}</span>{' '}
+              {displayItems.length === 1 ? 'product' : 'products'}
+            </p>
+            <select
+              title="sort"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 text-sm bg-white"
+            >
+              <option>Sort by: Featured</option>
+              <option>Price: Low to High</option>
+              <option>Price: High to Low</option>
+              <option>Rating: High to Low</option>
+            </select>
+          </div>
         </div>
 
         {/* Product Grid */}

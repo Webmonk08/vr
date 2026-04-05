@@ -83,7 +83,7 @@ func (s *StorageService) DeleteImages(bucketName string, imageURLs []string) err
 	if err != nil {
 		return types.InternalServerError(fmt.Sprintf("Failed to delete images: %v", err))
 	}
-	if result != nil && len(result) > 0 && result[0].Error != "" {
+	if len(result) > 0 && result[0].Error != "" {
 		return types.InternalServerError(fmt.Sprintf("Failed to delete images: %v", result[0].Error))
 	}
 	return nil

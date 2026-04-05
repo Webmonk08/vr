@@ -21,6 +21,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         storageUnitId: null,
         stock: 0,
         price: 0,
+        originalPrice: 0,
         isdefault: false,
         category: '',
         features: []
@@ -29,7 +30,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     return variants.map(v => ({
       ...v,
       weight: typeof v.weight === 'string' ? v.weight.replace(/\s+/g, '') : v.weight,
-      image: Array.isArray(v.image) ? v.image[0] || '' : v.image
+      image: Array.isArray(v.image) ? v.image[0] || '' : v.image,
+      originalPrice: v.originalPrice || v.price
     }));
   };
 
@@ -93,6 +95,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           image: '',
           stock: 0,
           price: 0,
+          originalPrice: 0,
           isdefault: false,
           category: '',
           features: []
@@ -235,23 +238,44 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                   </div>
                 </div>
 
-                {/* Price */}
-                <div>
-                  <label className="block text-sm text-gray-700 mb-2">
-                    Price ($) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={variant.price}
-                      onChange={(e) => handleVariantChange(index, 'price', parseFloat(e.target.value))}
-                      placeholder="0.00"
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
-                      required
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Price */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-2">
+                      Price ($) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variant.price}
+                        onChange={(e) => handleVariantChange(index, 'price', parseFloat(e.target.value))}
+                        placeholder="0.00"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Original Price */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-2">
+                      Original Price ($)
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variant.originalPrice || variant.price}
+                        onChange={(e) => handleVariantChange(index, 'originalPrice', parseFloat(e.target.value))}
+                        placeholder="0.00"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:border-green-700 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
