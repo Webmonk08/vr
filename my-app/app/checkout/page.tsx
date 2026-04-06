@@ -1,11 +1,12 @@
 'use client'
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ShoppingBag, MapPin, Phone, ArrowLeft, CreditCard, CheckCircle, Truck, Tag } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CartService } from '@/services/cart.service';
 import { OrdersService } from '@/services/orders.service';
+import { getUserProfile } from '@/services/user.service';
 import { CartItem } from '@/types/cart.types';
 import LoadingPage from '@/component/loadingPage';
 import withAuth from '@/component/withAuth';
@@ -22,6 +23,25 @@ function CheckoutPage() {
   const [phoneNo, setPhoneNo] = useState('');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+
+  // Fetch user profile for default address and phone
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: () => getUserProfile(user!.id),
+    enabled: !!user,
+  });
+
+  // Set default address and phone when profile is loaded
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.address) {
+        setShippingAddress(userProfile.address);
+      }
+      if (userProfile.phone) {
+        setPhoneNo(userProfile.phone);
+      }
+    }
+  }, [userProfile]);
 
   // Fetch cart
   const { data: userCart, isLoading } = useQuery<CartItem[]>({

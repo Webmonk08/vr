@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Clock, Package, CheckCircle, Search, User, Warehouse, Truck, Box, TrendingUp, Eye, Download, XCircle, Printer, X } from 'lucide-react';
 import { OrdersService, Order, OrderStatus } from '@/services/orders.service';
-import { ProductService } from '@/services/products.service';
 import { useRouter } from 'next/navigation';
 
 interface DisplayOrder {
@@ -26,7 +25,6 @@ interface DisplayOrder {
   total: number;
   orderDate: string;
   deliveryDate?: string;
-  storage?: string;
 }
 
 const mapApiOrderToDisplayOrder = (order: Order): DisplayOrder => ({
@@ -49,7 +47,6 @@ const mapApiOrderToDisplayOrder = (order: Order): DisplayOrder => ({
   status: order.status as DisplayOrder['status'],
   total: order.total_amount,
   orderDate: order.created_at,
-  storage: 'Main Warehouse',
 });
 
 export default function OrdersManagement() {
@@ -60,7 +57,6 @@ export default function OrdersManagement() {
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [orderForPrint, setOrderForPrint] = useState<DisplayOrder | null>(null);
-  const [selectedStorageUnits, setSelectedStorageUnits] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -115,12 +111,7 @@ export default function OrdersManagement() {
     setShowPrintModal(true);
   };
 
-  const handleStorageUnitChange = (productId: string, storageUnitId: string) => {
-    setSelectedStorageUnits((prev) => ({
-      ...prev,
-      [productId]: storageUnitId,
-    }));
-  };
+
 
   const handlePrint = () => {
     setShowPrintModal(false);
@@ -372,22 +363,7 @@ export default function OrdersManagement() {
                   </div>
                 </div>
 
-                {/* Storage Info */}
-                <div className="space-y-2">
-                  <h4 className="text-sm text-gray-500 mb-2">Order Details</h4>
-                  <div className="flex items-center gap-2">
-                    <Warehouse className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">Storage: {order.storage}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Box className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">{order.products.length} Product{order.products.length !== 1 ? 's' : ''}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-green-700 font-medium">Total: ${order.total.toFixed(2)}</span>
-                  </div>
-                </div>
+                
               </div>
 
               {/* Products */}

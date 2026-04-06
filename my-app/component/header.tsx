@@ -25,7 +25,7 @@ const Header = () => {
     enabled: isHydrated && !!user,
   });
 
-  const totalItems = user ? (userCart?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0) : guestItemCount;
+  const totalItems = user ? (userCart?.reduce((acc: number, item: any) => acc + 1, 0) || 0) : guestItemCount;
 
   const currPath = usePathname()
 

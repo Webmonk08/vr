@@ -242,7 +242,7 @@ const ContactPage = ({ onNavigate }: ContactPageProps) => {
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center pb-3 border-b border-green-600">
-                    <span>Monday - Friday</span>
+                    <span>Monday - Saturday</span>
                     <span className="font-medium">9:00 AM - 9:00 PM</span>
                   </div>
                   
