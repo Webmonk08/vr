@@ -6,7 +6,6 @@ export class ProductService {
   static async getAll(): Promise<Product[]> {
     try {
       const data = await apiClient.get<Product[]>('/api/products/getAll');
-      console.log("data", data)
       return data;
     } catch (error) {
       throw error;

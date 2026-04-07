@@ -82,7 +82,6 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const data = await apiClient.post<{ user: User; session: Session }>('/api/auth/login', { email, password });
-          console.log(data.session)
           set({ user: data.user, session: data.session, isLoading: false });
           toast.success('Login successful!');
           if (data.user) {

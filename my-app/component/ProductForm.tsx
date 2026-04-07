@@ -148,7 +148,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   };
 
   // ... (rest of the component up to image upload UI)
-  console.log("FormData", formData)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
