@@ -1,7 +1,38 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 import { apiClient, ApiException } from "@/lib/api-client";
 import { toast } from "@/store/useToastStore";
+
+const dynamicStorage: StateStorage = {
+  getItem: (name) => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem(name) || localStorage.getItem(name) || null;
+  },
+  setItem: (name, value) => {
+    if (typeof window === "undefined") return;
+    try {
+      const parsed = JSON.parse(value);
+      const role = parsed?.state?.role;
+      
+      // Store in localStorage if role is customer or if it's not determined yet
+      if (role === "customer" || !role) {
+        localStorage.setItem(name, value);
+        sessionStorage.removeItem(name);
+      } else {
+        // Non-customers (e.g., admin) get session-only storage
+        sessionStorage.setItem(name, value);
+        localStorage.removeItem(name);
+      }
+    } catch {
+      localStorage.setItem(name, value);
+    }
+  },
+  removeItem: (name) => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(name);
+    sessionStorage.removeItem(name);
+  },
+};
 
 interface User {
   id: string;
@@ -51,6 +82,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const data = await apiClient.post<{ user: User; session: Session }>('/api/auth/login', { email, password });
+          console.log(data.session)
           set({ user: data.user, session: data.session, isLoading: false });
           toast.success('Login successful!');
           if (data.user) {
@@ -108,6 +140,9 @@ export const useAuthStore = create<AuthState>()(
         toast.info('Logged out successfully');
       },
     }),
-    { name: "auth-storage" }
+    { 
+      name: "auth-storage",
+      storage: createJSONStorage(() => dynamicStorage)
+    }
   )
 );
