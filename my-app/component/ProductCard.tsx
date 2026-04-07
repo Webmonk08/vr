@@ -10,6 +10,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onSelect, onDelete }: ProductCardProps) {
   const variants = product.variants || [];
+  const firstImage = Array.isArray(variants[0]?.image) ? variants[0].image[0] : variants[0]?.image;
+  const imageUrl = typeof firstImage === 'string' && firstImage.trim() !== '' ? firstImage : null;
 
   return (
     <div
@@ -17,12 +19,16 @@ export function ProductCard({ product, onSelect, onDelete }: ProductCardProps) {
       className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-lg transition cursor-pointer group"
     >
       {/* Product Image */}
-      <div className="h-48 overflow-hidden bg-gray-100">
-        <img
-          src={Array.isArray(variants[0]?.image) ? variants[0].image[0] : (variants[0]?.image || '')}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-        />
+      <div className="h-48 overflow-hidden bg-gray-100 flex items-center justify-center">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+          />
+        ) : (
+          <span className="text-4xl text-gray-400">🌾</span>
+        )}
       </div>
 
       {/* Product Info */}

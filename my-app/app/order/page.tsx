@@ -26,10 +26,10 @@ function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
         </div>
 
         {/* Main Tabs */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <button
             onClick={() => setActiveSection('orders')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'orders'
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${activeSection === 'orders'
               ? 'bg-green-700 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
@@ -39,7 +39,7 @@ function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
           </button>
           {role === "OWNER" && (<button
             onClick={() => setActiveSection('users')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'users'
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${activeSection === 'users'
               ? 'bg-green-700 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
@@ -49,7 +49,7 @@ function OrderManagementPage({ onNavigate }: OrderManagementPageProps) {
           </button>)}
           <button
             onClick={() => setActiveSection('product')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeSection === 'product'
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${activeSection === 'product'
               ? 'bg-green-700 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}

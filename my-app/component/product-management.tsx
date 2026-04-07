@@ -116,25 +116,35 @@ const ProductManagement = () => {
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* ADMIN Header */}
-        <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-3xl p-8 mb-8 text-white">
-          <div className="flex items-center gap-4 mb-2">
-            <Package className="w-10 h-10" />
-            <h1 className="text-3xl">Product Management</h1>
+        <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-8 text-white">
+          <div className="flex items-center gap-3 sm:gap-4 mb-2">
+            <Package className="w-8 h-8 sm:w-10 sm:h-10" />
+            <h1 className="text-2xl sm:text-3xl">Product Management</h1>
           </div>
-          <p className="text-green-100">Manage your rice product inventory and variants</p>
+          <p className="text-green-100 text-sm sm:text-base">Manage your rice product inventory and variants</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8">
           <button
-            onClick={() => setActiveTab(activeTab == 'add' ? 'manage' : 'add')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full transition ${activeTab === 'manage'
+            onClick={() => setActiveTab('manage')}
+            className={`flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${activeTab === 'manage'
               ? 'bg-green-700 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
               }`}
           >
-            <Edit className="w-5 h-5" />
-            Manage Products ({products.length})
+            <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+            Products ({products.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('add')}
+            className={`flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${activeTab === 'add'
+              ? 'bg-green-700 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            Add Product
           </button>
         </div>
 
@@ -154,13 +164,13 @@ const ProductManagement = () => {
               <div className="bg-white rounded-2xl shadow-sm p-8">
                 <button
                   onClick={() => setSelectedProduct(null)}
-                  className="flex items-center gap-2 text-gray-600 hover:text-green-700 mb-6 transition"
+                  className="flex items-center gap-2 text-gray-600 hover:text-green-700 mb-6 transition text-sm sm:text-base"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                   Back to Products
                 </button>
-                <h2 className="text-2xl mb-6 text-gray-900 flex items-center gap-2">
-                  <Edit className="w-6 h-6 text-green-700" />
+                <h2 className="text-xl sm:text-2xl mb-6 text-gray-900 flex items-center gap-2">
+                  <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
                   Edit Product: {selectedProduct.name}
                 </h2>
                 <ProductForm
@@ -178,7 +188,7 @@ const ProductManagement = () => {
                     <p className="text-gray-600 mb-6">Start by adding your first product</p>
                     <button
                       onClick={() => setActiveTab('add')}
-                      className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full transition"
+                      className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition"
                     >
                       Add Product
                     </button>

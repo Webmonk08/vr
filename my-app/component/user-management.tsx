@@ -124,16 +124,16 @@ const UserManagementPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
             <div>
-              <h1 className="text-4xl text-gray-900 mb-2">User Management</h1>
-              <p className="text-gray-600">Manage users, roles, and permissions</p>
+              <h1 className="text-3xl sm:text-4xl text-gray-900 mb-2">User Management</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Manage users, roles, and permissions</p>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full transition flex items-center gap-2"
+              className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               Add New User
             </button>
           </div>
@@ -143,7 +143,7 @@ const UserManagementPage = () => {
         <UserStats users={users} />
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />

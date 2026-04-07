@@ -108,7 +108,7 @@ function OrderDetailPage() {
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl text-gray-900 mb-2">{error || 'Order not found'}</h3>
             <Link href="/order">
-              <button className="mt-4 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full transition">
+              <button className="mt-4 bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition">
                 Back to Orders
               </button>
             </Link>
@@ -128,8 +128,8 @@ function OrderDetailPage() {
         </Link>
 
         {/* Order Header */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
+        <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-1">{order.orderNumber}</h1>
               <p className="text-sm text-gray-500">

@@ -247,10 +247,10 @@ export default function OrdersManagement() {
       </div>
 
       {/* Order Tabs */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <button
           onClick={() => setOrderTab('pending')}
-          className={`px-6 py-3 rounded-full transition ${orderTab === 'pending'
+          className={`px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${orderTab === 'pending'
             ? 'bg-green-700 text-white'
             : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
@@ -259,7 +259,7 @@ export default function OrdersManagement() {
         </button>
         <button
           onClick={() => setOrderTab('history')}
-          className={`px-6 py-3 rounded-full transition ${orderTab === 'history'
+          className={`px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full transition ${orderTab === 'history'
             ? 'bg-green-700 text-white'
             : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
@@ -372,11 +372,17 @@ export default function OrdersManagement() {
                 <div className="space-y-3">
                   {order.products.map((product, idx) => (
                     <div key={idx} className="flex items-center gap-4 bg-gray-50 rounded-xl p-3">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                          <span className="text-2xl">🌾</span>
+                        </div>
+                      )}
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">{product.name}</p>
                         <p className="text-xs text-gray-500">Variant: {product.variant}</p>
@@ -391,7 +397,7 @@ export default function OrdersManagement() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => router.push(`/order/${order.id}`)}
                   className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition flex items-center justify-center gap-2"
@@ -462,11 +468,17 @@ export default function OrdersManagement() {
                 <div className="space-y-3">
                   {orderForPrint.products.map((product, idx) => (
                     <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg">🌾</span>
+                        </div>
+                      )}
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">{product.name}</p>
                         <p className="text-xs text-gray-500">Qty: {product.quantity}</p>

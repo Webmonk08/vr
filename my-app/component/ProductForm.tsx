@@ -493,12 +493,12 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       </div>
 
       {/* Submit Button */}
-      <div className="flex gap-4 pt-4">
+      <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <button
           type="submit"
-          className="flex-1 bg-green-700 hover:bg-green-800 text-white py-4 rounded-full transition flex items-center justify-center gap-2"
+          className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 sm:py-3.5 rounded-full transition flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
         >
-          <Package className="w-5 h-5" />
+          <Package className="w-4 h-4 sm:w-5 sm:h-5" />
           {product ? 'Update Product' : 'Add Product'}
         </button>
         {!product && (
@@ -526,7 +526,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 ]
               });
             }}
-            className="px-8 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 py-4 rounded-full transition"
+            className="w-full sm:w-auto px-6 sm:px-8 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 py-3 sm:py-3.5 rounded-full transition text-sm sm:text-base font-medium"
           >
             Reset
           </button>
