@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
-  
+
   // Track if hydration has finished
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -167,16 +167,16 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         {/* Profile Header */}
-        <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-3xl p-8 mb-8 text-white">
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
-              <User className="w-12 h-12 text-white" />
+        <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 text-white">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur shrink-0">
+              <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl mb-2">{userData?.name}</h1>
-              <p className="text-green-100">{user?.email || userData?.email}</p>
+            <div className="mt-2 sm:mt-0 w-full overflow-hidden">
+              <h1 className="text-2xl sm:text-3xl mb-1 sm:mb-2 font-semibold truncate">{userData?.name}</h1>
+              <p className="text-green-100 text-sm sm:text-base truncate">{user?.email || userData?.email}</p>
             </div>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function ProfilePage() {
 
                 {/* Action Buttons */}
                 {isEditingDetails && (
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       onClick={handleUpdateDetails}
                       className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition"
@@ -374,7 +374,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       onClick={handleChangePassword}
                       className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 rounded-full transition"
@@ -415,7 +415,8 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {recentOrders.map((order) => {
+                  {recentOrders.map((order, index) => {
+                    const displayClass = index >= 2 ? 'hidden sm:block' : 'block';
                     const statusColor = order.status === 'DELIVERED'
                       ? 'bg-green-100 text-green-700'
                       : order.status === 'SHIPPED'
@@ -431,11 +432,11 @@ export default function ProfilePage() {
                       .join(', ') || 'No items';
 
                     return (
-                      <Link key={order.id} href={`/order/${order.id}`}>
+                      <Link key={order.id} href={`/order/${order.id}`} className={displayClass}>
                         <div className="border-2 border-gray-100 rounded-2xl p-4 hover:border-green-200 transition cursor-pointer">
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2 sm:gap-0">
                             <span className="text-sm font-medium text-gray-700">ORD-{order.id.slice(0, 8).toUpperCase()}</span>
-                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                            <span className={`inline-flex items-center w-fit gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
                               <StatusIcon className="w-3 h-3" />
                               {order.status}
                             </span>
@@ -468,22 +469,22 @@ export default function ProfilePage() {
             {/* Account Stats */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h3 className="mb-4 text-gray-900">Account Overview</h3>
-              <div className="space-y-4">
-                <div className="bg-green-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                  <p className="text-2xl text-gray-900">{totalOrders}</p>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="bg-green-50 p-3 sm:p-4 rounded-xl overflow-hidden">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Orders</p>
+                  <p className="text-lg sm:text-2xl font-semibold text-gray-900">{totalOrders}</p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Total Spent</p>
-                  <p className="text-2xl text-gray-900">${totalSpent.toFixed(2)}</p>
+                <div className="bg-green-50 p-3 sm:p-4 rounded-xl overflow-hidden">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Spent</p>
+                  <p className="text-lg sm:text-2xl font-semibold text-gray-900 truncate">${totalSpent.toFixed(2)}</p>
                 </div>
-                <div className="bg-yellow-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Pending</p>
-                  <p className="text-2xl text-gray-900">{pendingOrders}</p>
+                <div className="bg-yellow-50 p-3 sm:p-4 rounded-xl overflow-hidden">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Pending</p>
+                  <p className="text-lg sm:text-2xl font-semibold text-gray-900">{pendingOrders}</p>
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Delivered</p>
-                  <p className="text-2xl text-gray-900">{deliveredOrders}</p>
+                <div className="bg-emerald-50 p-3 sm:p-4 rounded-xl overflow-hidden">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Delivered</p>
+                  <p className="text-lg sm:text-2xl font-semibold text-gray-900">{deliveredOrders}</p>
                 </div>
               </div>
             </div>
